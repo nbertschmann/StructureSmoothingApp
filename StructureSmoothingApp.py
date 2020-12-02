@@ -4,6 +4,7 @@ from WriteToCSV import writeToCSV
 from FormatData import formatData
 from RecreateStructure import recreateStructure
 from PlotArray import plotArray
+from ShowQT import showQT
 
 import PyQt5
 import sys
@@ -21,12 +22,10 @@ class StructureSmooth(QWidget):
 
         self.browse_button = QtWidgets.QPushButton('Browse')
         self.browse_box = QtWidgets.QLineEdit()
-        self.currentLevelness_box = QtWidgets.QTabWidget()
-        self.newLevelness_Box  = QtWidgets.QTabWidget()
+        self.structurePlot_box = QtWidgets.QTabWidget()
         self.analyzeStructure_button = QtWidgets.QPushButton('Analyze Structure')
 
-        self.currentLevelness_text = QtWidgets.QLabel('Current Structure')
-        self.newLevelness_text = QtWidgets.QLabel('New Structure')
+        self.structurePlot_text = QtWidgets.QLabel('Current Structure')
 
         browse_layout = QtWidgets.QHBoxLayout()
         browse_layout.addWidget(self.browse_button)
@@ -34,10 +33,8 @@ class StructureSmooth(QWidget):
 
         master_layout = QtWidgets.QVBoxLayout()
         master_layout.addLayout(browse_layout)
-        master_layout.addWidget(self.currentLevelness_text)
-        master_layout.addWidget(self.currentLevelness_box)
-        master_layout.addWidget(self.newLevelness_text)
-        master_layout.addWidget(self.newLevelness_Box)
+        master_layout.addWidget(self.structurePlot_text)
+        master_layout.addWidget(self.structurePlot_box, 1)
         master_layout.addWidget(self.analyzeStructure_button)
 
         self.setLayout(master_layout)
@@ -47,7 +44,7 @@ class StructureSmooth(QWidget):
 
     def initUI(self):
 
-        self.setGeometry(50, 75, 1000, 900)
+        self.setGeometry(20, 55, 1100, 900)
         self.setWindowTitle('Smooooooth')
 
         self.show()
@@ -90,8 +87,16 @@ class StructureSmooth(QWidget):
         writeToCSV(combined_data, base_path)
         xtilt_real, ytilt_real = formatData(combined_data)
         currentStructure_plot, newStructurePlot = recreateStructure(xtilt_real, ytilt_real)
-        plotArray(currentStructure_plot, -10, 10)
-        plotArray(newStructurePlot, -10, 10)
+
+        fig_current = plotArray(currentStructure_plot, -10, 10)
+        fig_new = plotArray(newStructurePlot, -10, 10)
+
+        fig1 = showQT(fig_current)
+        fig2 = showQT(fig_new)
+
+        self.structurePlot_box.addTab(fig1, 'Current')
+        self.structurePlot_box.addTab(fig2, 'New')
+
 
 
 

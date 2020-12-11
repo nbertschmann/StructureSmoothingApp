@@ -13,90 +13,121 @@ from PyQt5.QtWidgets import (QWidget, QPushButton, QApplication)
 from PyQt5 import QtWidgets
 import os
 from PyQt5.QtCore import QThreadPool
+from PyQt5.QtCore import QAbstractItemModel
 
 
 
 class StructureSmooth(QWidget):
     def __init__(self):
         super().__init__()
+        self.my_layout = QtWidgets.QVBoxLayout(self)
 
-        self.browse_button = QtWidgets.QPushButton('Browse')
-        self.browse_box = QtWidgets.QLineEdit()
-        self.structurePlot_box = QtWidgets.QTabWidget()
-        self.analyzeStructure_button = QtWidgets.QPushButton('Analyze Structure')
+        self.pushButton1 = QPushButton("Create Plots")
+        self.browse_button1 = QtWidgets.QPushButton('Browse')
+        self.browse_box1 = QtWidgets.QLineEdit()
 
-        self.structurePlot_text = QtWidgets.QLabel('Current Structure')
+        self.plotDisplay_tab = QtWidgets.QTabWidget()
 
-        browse_layout = QtWidgets.QHBoxLayout()
-        browse_layout.addWidget(self.browse_button)
-        browse_layout.addWidget(self.browse_box)
+        self.browse_layout1 = QtWidgets.QHBoxLayout()
+        self.browse_layout1.addWidget(self.browse_button1)
+        self.browse_layout1.addWidget(self.browse_box1)
 
-        master_layout = QtWidgets.QVBoxLayout()
-        master_layout.addLayout(browse_layout)
-        master_layout.addWidget(self.structurePlot_text)
-        master_layout.addWidget(self.structurePlot_box, 1)
-        master_layout.addWidget(self.analyzeStructure_button)
+        self.tab_layout1 = QtWidgets.QVBoxLayout()
+        self.tab_layout1.addLayout(self.browse_layout1)
+        self.tab_layout1.addWidget(self.plotDisplay_tab)
+        self.tab_layout1.addWidget(self.pushButton1)
 
-        self.setLayout(master_layout)
+        self.pushButton2 = QtWidgets.QPushButton("Analyze Logs")
+        self.browse_button2 = QtWidgets.QPushButton('Browse')
+        self.browse_box2 = QtWidgets.QLineEdit()
+
+        self.table_display = self.initTable()
+
+        self.browse_layout2 = QtWidgets.QHBoxLayout()
+        self.browse_layout2.addWidget(self.browse_button2)
+        self.browse_layout2.addWidget(self.browse_box2)
+
+        self.tab_layout2 = QtWidgets.QVBoxLayout()
+        self.tab_layout2.addLayout(self.browse_layout2)
+        self.tab_layout2.addWidget(self.table_display)
+        self.tab_layout2.addWidget(self.pushButton2)
+
+        self.tab1 = QWidget()
+        self.tab2 = QWidget()
+
+        self.tab1.layout = QtWidgets.QVBoxLayout(self)
+        self.tab1.layout.addLayout(self.tab_layout1)
+        self.tab1.setLayout(self.tab1.layout)
+
+        self.tab2.layout = QtWidgets.QVBoxLayout(self)
+        self.tab2.layout.addLayout(self.tab_layout2)
+        self.tab2.setLayout(self.tab2.layout)
+
+        self.select_tab = QtWidgets.QTabWidget()
+        self.select_tab.addTab(self.tab1, 'Create Plots')
+        self.select_tab.addTab(self.tab2, 'Analyze Logs')
+
+        self.my_layout.addWidget(self.select_tab)
+        self.setLayout(self.my_layout)
         self.initUI()
+
 
         self.connect()
 
+    def initTable(self):
+
+        model = QtGui.QStandardItemModel()
+        model.setHorizontalHeaderLabels(['DM', 'X', 'Y', 'Z', 'Pitch', 'Roll'])
+        table = QtWidgets.QTableView()
+        table.setModel(model)
+
+        header = table.horizontalHeader()
+        header.setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
+        header.setSectionResizeMode(1, QtWidgets.QHeaderView.Stretch)
+        header.setSectionResizeMode(2, QtWidgets.QHeaderView.Stretch)
+        header.setSectionResizeMode(3, QtWidgets.QHeaderView.Stretch)
+        header.setSectionResizeMode(4, QtWidgets.QHeaderView.Stretch)
+        header.setSectionResizeMode(5, QtWidgets.QHeaderView.Stretch)
+
+        return table
+
     def initUI(self):
 
-        self.setGeometry(20, 55, 1100, 900)
-        self.setWindowTitle('Smooooooth')
+        self.setGeometry(50, 75, 1000, 900)
+        self.setWindowTitle('Structure Smoothness')
 
         self.show()
 
     def connect(self):
-        self.browse_button.clicked.connect(self.browseFiles)
-        self.analyzeStructure_button.clicked.connect(self.analyzeStructure)
+        self.browse_button1.clicked.connect(self.browseFiles1)
+        self.browse_button2.clicked.connect(self.browseFiles2)
 
-    def browseFiles(self):
+    def browseFiles1(self):
 
         self.folder_path = QtWidgets.QFileDialog.getExistingDirectory(self, "Folder Browser")
+
         folder_arr = self.folder_path.strip().split('/')
         self.folder_name = folder_arr[-1]
 
         if self.folder_path:
 
-            self.browse_box.clear()
-            self.browse_box.insert(self.folder_path)
+            self.browse_box1.clear()
+            self.browse_box1.insert(self.folder_path)
 
             file_arr = os.listdir(self.folder_path)
 
-    def analyzeStructure(self):
+    def browseFiles2(self):
 
-        base_path = self.folder_path
+        file_tuple = QtWidgets.QFileDialog.getOpenFileName(self, "File Browser")
+        self.file_path = file_tuple[0]
 
-        logFile_array = []
+        file_arr = self.file_path.strip().split('/')
+        self.file = file_arr[-1]
 
-        for file in os.listdir(self.folder_path):
+        if self.file_path:
 
-            if 'struct' in file.lower() and file.endswith('.csv'):
-                structureVerification_path = os.path.join(base_path, file)
-
-            if file.endswith('.txt') or file.endswith('.log'):
-                logFile_array.append(file)
-
-        log_path = os.path.join(self.folder_path, logFile_array[0])
-
-        data = parseLogs(log_path, structureVerification_path)
-        combined_data = combineTilts(data)
-        writeToCSV(combined_data, base_path)
-        xtilt_real, ytilt_real = formatData(combined_data)
-        currentStructure_plot, newStructurePlot = recreateStructure(xtilt_real, ytilt_real)
-
-        fig_current = plotArray(currentStructure_plot, -10, 10)
-        fig_new = plotArray(newStructurePlot, -10, 10)
-
-        fig1 = showQT(fig_current)
-        fig2 = showQT(fig_new)
-
-        self.structurePlot_box.addTab(fig1, 'Current')
-        self.structurePlot_box.addTab(fig2, 'New')
-
+            self.browse_box2.clear()
+            self.browse_box2.insert(self.file_path)
 
 
 

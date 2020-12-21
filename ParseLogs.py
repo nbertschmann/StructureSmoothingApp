@@ -7,7 +7,7 @@ import os
 def parseLogs(log_path, structureVerification_path):
 
     log_file = open(log_path, "r", encoding='utf8', errors='ignore')
-    data = {'DM': [], 'x': [], 'y': [], 'z': [], 'pitch': [], 'roll': []}
+    data = {'DM': [], 'X': [], 'Y': [], 'Z': [], 'Pitch': [], 'Roll': []}
 
     for line in log_file:
 
@@ -21,13 +21,13 @@ def parseLogs(log_path, structureVerification_path):
                 # pitch value must be modified to match correct tilt
                 pitch_val *= -1
                 pitch_val = str(pitch_val)
-                data['pitch'].append(float(pitch_val))
+                data['Pitch'].append(float(pitch_val))
 
 
                 roll_val = re.search("(?<=R:)[' ']?[-]?[0-9].[0-9]{1,3}", line).group()
                 print('Roll: ' + roll_val)
                 roll_val = roll_val.lstrip(' ')
-                data['roll'].append(float(roll_val))
+                data['Roll'].append(float(roll_val))
 
                 dm_val = re.search("(?<=DM:)[' ']?[-]?[0-9].[0-9]{1,3}", line).group()
                 dm_val = dm_val.lstrip(' ')
@@ -40,14 +40,14 @@ def parseLogs(log_path, structureVerification_path):
                 for row in structureVerification_file:
 
                     if dm_val == row[4]:
-                        data['x'].append(int(row[1]))
-                        data['y'].append(int(row[2]))
-                        data['z'].append(int(row[3]))
+                        data['X'].append(int(row[1]))
+                        data['Y'].append(int(row[2]))
+                        data['Z'].append(int(row[3]))
 
-                if len(data['x']) != len(data['code']):
-                    data['x'].append(float('NaN'))
-                    data['y'].append(float('NaN'))
-                    data['z'].append(float('NaN'))
+                if len(data['X']) != len(data['code']):
+                    data['X'].append(float('NaN'))
+                    data['Y'].append(float('NaN'))
+                    data['Z'].append(float('NaN'))
 
         except Exception as e:
             print("[ERROR]: exception={}".format(e))

@@ -2,27 +2,29 @@ import pandas as pd
 def combineTilts(data):
     data_out = pd.DataFrame()
 
-    for x in data['x'].unique():
+    for x in data['X'].unique():
 
-        for y in data.loc[(data['x'] == x), 'y'].unique():
+        for y in data.loc[(data['X'] == x), 'Y'].unique():
 
-            for z in data.loc[(data['x'] == x) & (data['y'] == y), 'z'].unique():
-                datamatrix = data.loc[(data['x'] == x) & (data['y'] == y) & (data['z'] == z), 'DM'].max()
+            for z in data.loc[(data['X'] == x) & (data['Y'] == y), 'Z'].unique():
+                datamatrix = data.loc[(data['X'] == x) & (data['Y'] == y) & (data['Z'] == z), 'DM'].max()
 
-                pitch = data.loc[(data['x'] == x) & (data['y'] == y) & (data['z'] == z), 'pitch']
+                pitch = data.loc[(data['X'] == x) & (data['Y'] == y) & (data['Z'] == z), 'Pitch']
                 pitch_sum = pitch.sum()
                 pitch_average = pitch_sum / len(pitch)
+                pitch_average = round(pitch_average, 2)
 
-                roll = data.loc[(data['x'] == x) & (data['y'] == y) & (data['z'] == z), 'roll']
+                roll = data.loc[(data['X'] == x) & (data['Y'] == y) & (data['Z'] == z), 'Roll']
                 roll_sum = roll.sum()
                 roll_average = roll_sum / len(roll)
+                roll_average = round(roll_average, 2)
 
-                temp_results = {'DM': datamatrix, 'x': [x], 'y': [y], 'z': [z], 'pitch': [pitch_average],
-                                'roll': [roll_average]}
+                temp_results = {'DM': datamatrix, 'X': [x], 'Y': [y], 'Z': [z], 'Pitch': [pitch_average],
+                                'Roll': [roll_average]}
                 temp_df = pd.DataFrame(temp_results)
 
                 data_out = data_out.append(temp_df)
 
-    data_sorted = data_out.sort_values(by=['x', 'y'], ascending=True)
-    pass
+    data_sorted = data_out.sort_values(by=['Z', 'X', 'Y'], ascending=True, ignore_index=True)
+
     return data_sorted

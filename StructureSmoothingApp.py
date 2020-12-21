@@ -15,11 +15,24 @@ import os
 from PyQt5.QtCore import QThreadPool
 from PyQt5.QtCore import QAbstractItemModel
 
+import sys
+from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtCore import Qt
+import pandas as pd
+
+
 
 
 class StructureSmooth(QWidget):
     def __init__(self):
         super().__init__()
+
+        self.file_path = ''
+        self.file_name = ''
+        self.folder_path = ''
+        self.folder_name = ''
+        self.file_arr = []
+
         self.my_layout = QtWidgets.QVBoxLayout(self)
 
         self.pushButton1 = QPushButton("Create Plots")
@@ -37,7 +50,7 @@ class StructureSmooth(QWidget):
         self.tab_layout1.addWidget(self.plotDisplay_tab)
         self.tab_layout1.addWidget(self.pushButton1)
 
-        self.pushButton2 = QtWidgets.QPushButton("Analyze Logs")
+        self.analyzeLogs_button = QtWidgets.QPushButton("Analyze Logs")
         self.browse_button2 = QtWidgets.QPushButton('Browse')
         self.browse_box2 = QtWidgets.QLineEdit()
 
@@ -50,7 +63,7 @@ class StructureSmooth(QWidget):
         self.tab_layout2 = QtWidgets.QVBoxLayout()
         self.tab_layout2.addLayout(self.browse_layout2)
         self.tab_layout2.addWidget(self.table_display)
-        self.tab_layout2.addWidget(self.pushButton2)
+        self.tab_layout2.addWidget(self.analyzeLogs_button)
 
         self.tab1 = QWidget()
         self.tab2 = QWidget()
@@ -70,7 +83,6 @@ class StructureSmooth(QWidget):
         self.my_layout.addWidget(self.select_tab)
         self.setLayout(self.my_layout)
         self.initUI()
-
 
         self.connect()
 
@@ -101,8 +113,23 @@ class StructureSmooth(QWidget):
     def connect(self):
         self.browse_button1.clicked.connect(self.browseFiles1)
         self.browse_button2.clicked.connect(self.browseFiles2)
+        self.analyzeLogs_button.clicked.connect(self.analyzeLogs)
 
     def browseFiles1(self):
+
+        file_path_tuple = QtWidgets.QFileDialog.getOpenFileName(self, "File Browser")
+
+        self.file_path = file_path_tuple[0]
+        file_array = self.file_path.strip().split('/')
+        self.file_name = file_array[-1]
+
+        if self.file_path:
+
+            self.browse_box1.clear()
+            self.browse_box1.insert(self.file_path)
+
+        pass
+    def browseFiles2(self):
 
         self.folder_path = QtWidgets.QFileDialog.getExistingDirectory(self, "Folder Browser")
 
@@ -110,25 +137,63 @@ class StructureSmooth(QWidget):
         self.folder_name = folder_arr[-1]
 
         if self.folder_path:
-
-            self.browse_box1.clear()
-            self.browse_box1.insert(self.folder_path)
-
-            file_arr = os.listdir(self.folder_path)
-
-    def browseFiles2(self):
-
-        file_tuple = QtWidgets.QFileDialog.getOpenFileName(self, "File Browser")
-        self.file_path = file_tuple[0]
-
-        file_arr = self.file_path.strip().split('/')
-        self.file = file_arr[-1]
-
-        if self.file_path:
-
             self.browse_box2.clear()
-            self.browse_box2.insert(self.file_path)
+            self.browse_box2.insert(self.folder_path)
 
+            self.file_arr = os.listdir(self.folder_path)
+
+    def analyzeLogs(self):
+
+        log_array = []
+        df_array = []
+
+        for file in self.file_arr:
+            if 'tblStruct' in file:
+                self.structureVerfication_file = os.path.join(self.folder_path, file)
+            if 'auto_output' in file:
+                log_array.append(file)
+
+        for file in log_array:
+            log_path = os.path.join(self.folder_path, file)
+            log_data = parseLogs(log_path, self.structureVerfication_file)
+            df_array.append(log_data)
+
+        self.log_data_raw = pd.concat(df_array)
+        self.log_data_combined = combineTilts(self.log_data_raw)
+
+        model = TableModel(self.log_data_combined)
+        self.table_display.setModel(model)
+
+        pass
+
+
+
+
+class TableModel(QtCore.QAbstractTableModel):
+
+    def __init__(self, data):
+        super(TableModel, self).__init__()
+        self._data = data
+
+    def data(self, index, role):
+        if role == Qt.DisplayRole:
+            value = self._data.iloc[index.row(), index.column()]
+            return str(value)
+
+    def rowCount(self, index):
+        return self._data.shape[0]
+
+    def columnCount(self, index):
+        return self._data.shape[1]
+
+    def headerData(self, section, orientation, role):
+        # section is the index of the column/row.
+        if role == Qt.DisplayRole:
+            if orientation == Qt.Horizontal:
+                return str(self._data.columns[section])
+
+            if orientation == Qt.Vertical:
+                return str(self._data.index[section])
 
 
 if __name__ == '__main__':

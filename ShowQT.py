@@ -1,7 +1,7 @@
 import plotly.offline as pyo
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 
-def show_qt(fig):
+def showQT(fig):
     raw_html = '<html><head><meta charset="utf-8" />'
     raw_html += '<script src="https://cdn.plot.ly/plotly-latest.min.js"></script></head>'
     raw_html += '<body>'

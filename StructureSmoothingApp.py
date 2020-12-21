@@ -35,7 +35,7 @@ class StructureSmooth(QWidget):
 
         self.my_layout = QtWidgets.QVBoxLayout(self)
 
-        self.pushButton1 = QPushButton("Create Plots")
+        self.plotStructure_button = QPushButton("Create Plots")
         self.browse_button1 = QtWidgets.QPushButton('Browse')
         self.browse_box1 = QtWidgets.QLineEdit()
 
@@ -48,7 +48,7 @@ class StructureSmooth(QWidget):
         self.tab_layout1 = QtWidgets.QVBoxLayout()
         self.tab_layout1.addLayout(self.browse_layout1)
         self.tab_layout1.addWidget(self.plotDisplay_tab)
-        self.tab_layout1.addWidget(self.pushButton1)
+        self.tab_layout1.addWidget(self.plotStructure_button)
 
         self.analyzeLogs_button = QtWidgets.QPushButton("Analyze Logs")
         self.browse_button2 = QtWidgets.QPushButton('Browse')
@@ -114,6 +114,7 @@ class StructureSmooth(QWidget):
         self.browse_button1.clicked.connect(self.browseFiles1)
         self.browse_button2.clicked.connect(self.browseFiles2)
         self.analyzeLogs_button.clicked.connect(self.analyzeLogs)
+        self.plotStructure_button.clicked.connect(self.plotStructure)
 
     def browseFiles1(self):
 
@@ -146,6 +147,16 @@ class StructureSmooth(QWidget):
 
         log_array = []
         df_array = []
+        logDataRaw_name = 'logDataRaw.csv'
+        logDataCombined_name = 'logDataCombined.csv'
+
+        output_path = os.path.join(self.folder_path, 'output')
+
+        if not os.path.exists(output_path):
+            os.mkdir(output_path)
+
+        logDataRaw_path = os.path.join(output_path, logDataRaw_name)
+        logDataCombined_path = os.path.join(output_path, logDataCombined_name)
 
         for file in self.file_arr:
             if 'tblStruct' in file:
@@ -164,10 +175,36 @@ class StructureSmooth(QWidget):
         model = TableModel(self.log_data_combined)
         self.table_display.setModel(model)
 
+        self.log_data_raw.to_csv(logDataRaw_path)
+        self.log_data_combined.to_csv(logDataCombined_path)
+
         pass
 
+    def plotStructure(self):
+
+        try:
+            structureData_raw = pd.read_csv(self.file_path, usecols=['DM', 'X', 'Y', 'Z', 'Pitch', 'Roll'])
+        except Exception as exp:
+            print('[ERROR]', exp)
+            return 0
 
 
+        structureData = combineTilts(structureData_raw)
+
+        xtilt_real, ytilt_real = formatData(structureData)
+
+        Zheight_recreated, Zheight_lowpass = recreateStructure(xtilt_real, ytilt_real)
+
+        currentStructure_plot = plotArray(Zheight_recreated, -30, 30)
+        newStructure_plot = plotArray(Zheight_lowpass, -30, 30)
+
+        currentStructure_html = showQT(currentStructure_plot)
+        newStructure_html = showQT(newStructure_plot)
+
+        self.plotDisplay_tab.addTab(currentStructure_html, 'Current Structure')
+        self.plotDisplay_tab.addTab(newStructure_html, 'New Structure')
+
+        pass
 
 class TableModel(QtCore.QAbstractTableModel):
 

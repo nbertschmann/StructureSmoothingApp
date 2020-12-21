@@ -41,12 +41,6 @@ class StructureSmooth(QWidget):
         self.browse_box1 = QtWidgets.QLineEdit()
         self.browse_box1.setReadOnly(True)
 
-        # self.plotDisplay_label = QtWidgets.QLabel('Plot Display')
-        # plotDisplay_font = QtGui.QFont()
-        # plotDisplay_font.setBold(True)
-        # self.plotDisplay_label.setFont(plotDisplay_font)
-
-
         self.plotDisplay_tab = QtWidgets.QTabWidget()
 
         self.browse_layout1 = QtWidgets.QHBoxLayout()
@@ -69,9 +63,12 @@ class StructureSmooth(QWidget):
         self.browse_layout2.addWidget(self.browse_button2)
         self.browse_layout2.addWidget(self.browse_box2)
 
+        self.tree = self.init_FileViewer()
+
         self.tab_layout2 = QtWidgets.QVBoxLayout()
         self.tab_layout2.addLayout(self.browse_layout2)
-        self.tab_layout2.addWidget(self.table_display)
+        self.tab_layout2.addWidget(self.tree, 1)
+        self.tab_layout2.addWidget(self.table_display,3)
         self.tab_layout2.addWidget(self.analyzeLogs_button)
 
         self.tab1 = QWidget()
@@ -118,6 +115,29 @@ class StructureSmooth(QWidget):
 
         return table
 
+    def init_FileViewer(self):
+        self.model = QtWidgets.QFileSystemModel()
+
+        tree = QtWidgets.QTreeView()
+        tree.setModel(self.model)
+        tree.setAlternatingRowColors(True)
+
+        header = tree.header()
+        # header.setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
+        header.setSectionResizeMode(1, QtWidgets.QHeaderView.Stretch)
+        header.setSectionResizeMode(2, QtWidgets.QHeaderView.Stretch)
+        header.setSectionResizeMode(3, QtWidgets.QHeaderView.Stretch)
+        tree.setColumnWidth(0, 350)
+
+        return tree
+
+    def set_FileViewer(self):
+
+        self.model.setRootPath(self.folder_path)
+
+        self.tree.setRootIndex(self.model.index(self.folder_path))
+
+
     def initUI(self):
 
         self.setGeometry(50, 75, 1000, 900)
@@ -146,6 +166,7 @@ class StructureSmooth(QWidget):
             self.plotStructure_button.setEnabled(True)
 
         pass
+
     def browseFiles2(self):
 
         self.folder_path = QtWidgets.QFileDialog.getExistingDirectory(self, "Folder Browser")
@@ -159,6 +180,9 @@ class StructureSmooth(QWidget):
             self.file_arr = os.listdir(self.folder_path)
 
             self.analyzeLogs_button.setEnabled(True)
+            self.set_FileViewer()
+
+
 
     def analyzeLogs(self):
 
@@ -226,6 +250,7 @@ class StructureSmooth(QWidget):
         else:
             self.showErrorMessage('File Type Error', 'Input File ' + '\'' + self.file_name + '\'' +
                                   ' is not an acceptable file type. File must end with \'.csv\'')
+            return 0
 
         structureData = combineTilts(structureData_raw)
 

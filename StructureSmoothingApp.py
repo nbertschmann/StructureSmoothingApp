@@ -33,11 +33,19 @@ class StructureSmooth(QWidget):
         self.folder_name = ''
         self.file_arr = []
 
+        self.setWindowIcon(QtGui.QIcon('structure3.ico'))
         self.my_layout = QtWidgets.QVBoxLayout(self)
 
         self.plotStructure_button = QPushButton("Create Plots")
         self.browse_button1 = QtWidgets.QPushButton('Browse')
         self.browse_box1 = QtWidgets.QLineEdit()
+        self.browse_box1.setReadOnly(True)
+
+        # self.plotDisplay_label = QtWidgets.QLabel('Plot Display')
+        # plotDisplay_font = QtGui.QFont()
+        # plotDisplay_font.setBold(True)
+        # self.plotDisplay_label.setFont(plotDisplay_font)
+
 
         self.plotDisplay_tab = QtWidgets.QTabWidget()
 
@@ -53,6 +61,7 @@ class StructureSmooth(QWidget):
         self.analyzeLogs_button = QtWidgets.QPushButton("Analyze Logs")
         self.browse_button2 = QtWidgets.QPushButton('Browse')
         self.browse_box2 = QtWidgets.QLineEdit()
+        self.browse_box2.setReadOnly(True)
 
         self.table_display = self.initTable()
 
@@ -82,9 +91,15 @@ class StructureSmooth(QWidget):
 
         self.my_layout.addWidget(self.select_tab)
         self.setLayout(self.my_layout)
-        self.initUI()
 
+        self.disableButtons()
+        self.initUI()
         self.connect()
+
+    def disableButtons(self):
+
+        self.analyzeLogs_button.setDisabled(True)
+        self.plotStructure_button.setDisabled(True)
 
     def initTable(self):
 
@@ -106,7 +121,7 @@ class StructureSmooth(QWidget):
     def initUI(self):
 
         self.setGeometry(50, 75, 1000, 900)
-        self.setWindowTitle('Structure Smoothness')
+        self.setWindowTitle(' Structure Smoothing Application')
 
         self.show()
 
@@ -128,6 +143,7 @@ class StructureSmooth(QWidget):
 
             self.browse_box1.clear()
             self.browse_box1.insert(self.file_path)
+            self.plotStructure_button.setEnabled(True)
 
         pass
     def browseFiles2(self):
@@ -140,8 +156,9 @@ class StructureSmooth(QWidget):
         if self.folder_path:
             self.browse_box2.clear()
             self.browse_box2.insert(self.folder_path)
-
             self.file_arr = os.listdir(self.folder_path)
+
+            self.analyzeLogs_button.setEnabled(True)
 
     def analyzeLogs(self):
 
@@ -149,7 +166,7 @@ class StructureSmooth(QWidget):
         df_array = []
         logDataRaw_name = 'logDataRaw.csv'
         logDataCombined_name = 'logDataCombined.csv'
-
+        structureVerfication_file = ''
         output_path = os.path.join(self.folder_path, 'output')
 
         if not os.path.exists(output_path):
@@ -160,13 +177,25 @@ class StructureSmooth(QWidget):
 
         for file in self.file_arr:
             if 'tblStruct' in file:
-                self.structureVerfication_file = os.path.join(self.folder_path, file)
+                structureVerfication_file = os.path.join(self.folder_path, file)
             if 'auto_output' in file:
                 log_array.append(file)
 
+        # if any of the required files are not present
+        error_list = []
+        if not structureVerfication_file:
+            error_list.append("Structure Verification file")
+        if not log_array:
+            error_list.append("Log file")
+        if error_list:
+            error_str = ', '.join(error_list)
+
+            self.showErrorMessage('Error', 'Files Missing: ' + error_str)
+            return 0
+
         for file in log_array:
             log_path = os.path.join(self.folder_path, file)
-            log_data = parseLogs(log_path, self.structureVerfication_file)
+            log_data = parseLogs(log_path, structureVerfication_file)
             df_array.append(log_data)
 
         self.log_data_raw = pd.concat(df_array)
@@ -182,12 +211,21 @@ class StructureSmooth(QWidget):
 
     def plotStructure(self):
 
-        try:
-            structureData_raw = pd.read_csv(self.file_path, usecols=['DM', 'X', 'Y', 'Z', 'Pitch', 'Roll'])
-        except Exception as exp:
-            print('[ERROR]', exp)
-            return 0
+        if self.file_path.endswith('.csv'):
 
+            try:
+                structureData_raw = pd.read_csv(self.file_path, usecols=['DM', 'X', 'Y', 'Z', 'Pitch', 'Roll'])
+            except Exception as exp:
+                print('[ERROR]', exp)
+
+                self.showErrorMessage('Column Error', 'Input File ' + '\'' + self.file_name + '\'' +
+                                      ' does not have correct number of columns for analysis '
+                                      '[DM, X, Y, Z, Pitch, Roll]')
+                return 0
+
+        else:
+            self.showErrorMessage('File Type Error', 'Input File ' + '\'' + self.file_name + '\'' +
+                                  ' is not an acceptable file type. File must end with \'.csv\'')
 
         structureData = combineTilts(structureData_raw)
 
@@ -205,6 +243,40 @@ class StructureSmooth(QWidget):
         self.plotDisplay_tab.addTab(newStructure_html, 'New Structure')
 
         pass
+
+    def showErrorMessage(self, title, error_message):
+        msg = QtWidgets.QMessageBox()
+
+
+        pos_X = float(self.pos().x())
+        pos_Y = float(self.pos().y())
+
+        height = float(self.size().height())
+        width = float(self.size().width())
+
+        errorBox_height = msg.size().height()
+        errorBox_width = msg.width()
+
+        errorBoxPos_X = pos_X + width/2 - 250
+        errorBoxPos_Y = pos_Y + height/2
+
+
+
+
+
+
+
+
+        msg.setGeometry(int(errorBoxPos_X), int(errorBoxPos_Y),300, 200)
+
+
+
+        msg.setIcon(QtWidgets.QMessageBox.Warning)
+        msg.setWindowTitle(title)
+        msg.setText(error_message)
+        msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+        msg.exec_()
+
 
 class TableModel(QtCore.QAbstractTableModel):
 

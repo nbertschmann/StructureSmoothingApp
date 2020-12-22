@@ -109,4 +109,7 @@ def recreateStructure(Xtilt_real, Ytilt_real):
     for i in range(lowpass_samples):
         Zheight_lowpass = blur(Zheight_lowpass, 1)
 
-    return Zheight_recreated, Zheight_lowpass
+    Zheight_delta = np.subtract(Zheight_lowpass, Zheight_recreated)
+
+    pass
+    return Zheight_recreated, Zheight_lowpass, Zheight_delta

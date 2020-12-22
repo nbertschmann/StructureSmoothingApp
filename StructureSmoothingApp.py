@@ -4,6 +4,7 @@ from WriteToCSV import writeToCSV
 from FormatData import formatData
 from RecreateStructure import recreateStructure
 from PlotArray import plotArray
+from ModifyPostHeights import modifyPostHeights
 from ShowQT import showQT
 
 import PyQt5
@@ -31,6 +32,7 @@ class StructureSmooth(QWidget):
         self.file_name = ''
         self.folder_path = ''
         self.folder_name = ''
+        self.postHeight_path = ''
         self.file_arr = []
 
         self.setWindowIcon(QtGui.QIcon('structure3.ico'))
@@ -42,6 +44,7 @@ class StructureSmooth(QWidget):
         self.browse_box1.setReadOnly(True)
 
         self.plotDisplay_tab = QtWidgets.QTabWidget()
+        self.plotDisplay_tab.setTabsClosable(True)
 
         self.browse_layout1 = QtWidgets.QHBoxLayout()
         self.browse_layout1.addWidget(self.browse_button1)
@@ -165,6 +168,9 @@ class StructureSmooth(QWidget):
             self.browse_box1.insert(self.file_path)
             self.plotStructure_button.setEnabled(True)
 
+            temp_folder = os.path.split(self.file_path)
+            self.postHeight_path = temp_folder[0]
+
         pass
 
     def browseFiles2(self):
@@ -222,18 +228,20 @@ class StructureSmooth(QWidget):
             log_data = parseLogs(log_path, structureVerfication_file)
             df_array.append(log_data)
 
-        self.log_data_raw = pd.concat(df_array)
-        self.log_data_combined = combineTilts(self.log_data_raw)
+        log_data_raw = pd.concat(df_array)
+        log_data_combined = combineTilts(log_data_raw)
 
-        model = TableModel(self.log_data_combined)
+        model = TableModel(log_data_combined)
         self.table_display.setModel(model)
 
-        self.log_data_raw.to_csv(logDataRaw_path)
-        self.log_data_combined.to_csv(logDataCombined_path)
+        log_data_raw.to_csv(logDataRaw_path)
+        log_data_combined.to_csv(logDataCombined_path)
 
         pass
 
     def plotStructure(self):
+
+        postHeight_file = 'postHeights.csv'
 
         if self.file_path.endswith('.csv'):
 
@@ -256,13 +264,18 @@ class StructureSmooth(QWidget):
 
         xtilt_real, ytilt_real = formatData(structureData)
 
-        Zheight_recreated, Zheight_lowpass = recreateStructure(xtilt_real, ytilt_real)
+        Zheight_recreated, Zheight_lowpass, Zheight_delta = recreateStructure(xtilt_real, ytilt_real)
 
         currentStructure_plot = plotArray(Zheight_recreated, -30, 30)
         newStructure_plot = plotArray(Zheight_lowpass, -30, 30)
 
         currentStructure_html = showQT(currentStructure_plot)
         newStructure_html = showQT(newStructure_plot)
+
+        postHeight_data = modifyPostHeights(Zheight_delta)
+
+        writeToCSV(postHeight_data, self.postHeight_path, postHeight_file)
+
 
         self.plotDisplay_tab.addTab(currentStructure_html, 'Current Structure')
         self.plotDisplay_tab.addTab(newStructure_html, 'New Structure')
@@ -271,7 +284,6 @@ class StructureSmooth(QWidget):
 
     def showErrorMessage(self, title, error_message):
         msg = QtWidgets.QMessageBox()
-
 
         pos_X = float(self.pos().x())
         pos_Y = float(self.pos().y())
@@ -285,16 +297,7 @@ class StructureSmooth(QWidget):
         errorBoxPos_X = pos_X + width/2 - 250
         errorBoxPos_Y = pos_Y + height/2
 
-
-
-
-
-
-
-
         msg.setGeometry(int(errorBoxPos_X), int(errorBoxPos_Y),300, 200)
-
-
 
         msg.setIcon(QtWidgets.QMessageBox.Warning)
         msg.setWindowTitle(title)

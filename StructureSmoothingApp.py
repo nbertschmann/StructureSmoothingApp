@@ -34,6 +34,8 @@ class WorkerSignals(QObject):
 
     clearTabs = pyqtSignal()
     plotStruct = pyqtSignal(go.Figure, go.Figure)
+    errorMessage = pyqtSignal(str, str)
+    abortProgram = pyqtSignal( )
 
 class Worker(QRunnable):
 
@@ -47,11 +49,14 @@ class Worker(QRunnable):
 
         self.kwargs['clear_tabs_callback'] = self.signals.clearTabs
         self.kwargs['plot_callback'] = self.signals.plotStruct
+        self.kwargs['error_message_callback'] = self.signals.errorMessage
+        self.kwargs['abort_callback'] = self.signals.abortProgram
 
     @pyqtSlot()
     def run(self):
 
-        self.fn(*self.args, **self.kwargs)
+        result = self.fn(*self.args, **self.kwargs)
+        print(str(result))
 
 
 class StructureSmooth(QWidget):
@@ -284,7 +289,7 @@ class StructureSmooth(QWidget):
         writeToCSV(log_data_raw, output_path, logDataRaw_name)
         writeToCSV(log_data_combined, output_path, logDataCombined_name)
 
-    def plotStructure(self, clear_tabs_callback, plot_callback):
+    def plotStructure(self, clear_tabs_callback, plot_callback, error_message_callback, abort_callback):
 
         clear_tabs_callback.emit()
 
@@ -297,14 +302,22 @@ class StructureSmooth(QWidget):
             except Exception as exp:
                 print('[ERROR]', exp)
 
-                self.showErrorMessage('Column Error', 'Input File ' + '\'' + self.file_name + '\'' +
-                                      ' does not have correct number of columns for analysis '
-                                      '[DM, X, Y, Z, Pitch, Roll]')
+                title = 'Column Error'
+                message = 'Input File ' + '\'' + self.file_name + '\'' + ' does not have correct number of columns for analysis [DM, X, Y, Z, Pitch, Roll]'
+
+                error_message_callback.emit(title, message)
+                abort_callback.emit()
+
                 return 0
 
         else:
-            self.showErrorMessage('File Type Error', 'Input File ' + '\'' + self.file_name + '\'' +
-                                  ' is not an acceptable file type. File must end with \'.csv\'')
+
+            title = 'File Type Error'
+            message = 'Input File ' + '\'' + self.file_name + '\'' + ' is not an acceptable file type. File must end with \'.csv\''
+            error_message_callback.emit(title, message)
+            abort_callback.emit()
+
+
             return 0
 
         structureData = combineTilts(structureData_raw)
@@ -342,8 +355,16 @@ class StructureSmooth(QWidget):
 
         worker.signals.clearTabs.connect(self.clearPlotTabs)
         worker.signals.plotStruct.connect(self.plotIt)
+        worker.signals.errorMessage.connect(self.showErrorMessage)
+        worker.signals.abortProgram.connect(self.abortNow)
 
         self.threadpool.start(worker)
+
+
+    def abortNow(self):
+
+        self.plotStructure_button.setEnabled(True)
+
 
     def clearPlotTabs(self):
 

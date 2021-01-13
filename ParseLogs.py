@@ -19,21 +19,23 @@ def parseLogs(log_path, structureVerification_path):
 
                 pitch_val = float(pitch_val.lstrip(' '))
                 # pitch value must be modified to match correct tilt
-                pitch_val *= -1
-                pitch_val = str(pitch_val)
-                data['Pitch'].append(float(pitch_val))
+                if pitch_val != 0:
+                    pitch_val *= -1
 
+                pitch_val = str(pitch_val)
 
                 roll_val = re.search("(?<=R:)[' ']?[-]?[0-9].[0-9]{1,3}", line).group()
                 print('Roll: ' + roll_val)
                 roll_val = roll_val.lstrip(' ')
-                data['Roll'].append(float(roll_val))
 
                 dm_val = re.search("(?<=DM:)[' ']?[-]?[0-9].[0-9]{1,3}", line).group()
                 dm_val = dm_val.lstrip(' ')
-                data['DM'].append(dm_val)
 
                 print(line)
+
+                data['Pitch'].append(float(pitch_val))
+                data['Roll'].append(float(roll_val))
+                data['DM'].append(dm_val)
 
                 structureVerification_file = csv.reader(open(structureVerification_path, 'r'), delimiter=",")
 
@@ -44,14 +46,38 @@ def parseLogs(log_path, structureVerification_path):
                         data['Y'].append(int(row[2]))
                         data['Z'].append(int(row[3]))
 
-                if len(data['X']) != len(data['code']):
+                        print(len(data['X']))
+                        print(len(data['Y']))
+                        print(len(data['Z']))
+                        print(len(data['Pitch']))
+                        print(len(data['Roll']))
+                        print(len(data['DM']))
+
+                if len(data['X']) != len(data['DM']):
                     data['X'].append(float('NaN'))
                     data['Y'].append(float('NaN'))
                     data['Z'].append(float('NaN'))
 
+                    print(len(data['X']))
+                    print(len(data['Y']))
+                    print(len(data['Z']))
+                    print(len(data['Pitch']))
+                    print(len(data['Roll']))
+                    print(len(data['DM']))
+
+
+
+
         except Exception as e:
+
             print("[ERROR]: exception={}".format(e))
             print("[ERROR]:  at line =" + line)
 
+    print(len(data['X']))
+    print(len(data['Y']))
+    print(len(data['Z']))
+    print(len(data['Pitch']))
+    print(len(data['Roll']))
+    print(len(data['DM']))
     my_data = pd.DataFrame(data)
     return my_data

@@ -22,9 +22,8 @@ def modifyPostHeights(Zheight_delta):
             delta_data['X'].append(x)
             delta_data['Y'].append(y)
             delta_data['Z'].append(z)
-            delta_data['Delta (mm)'].append(delta)
-            delta_data['Rotations (N)'].append(rotations)
-
+            delta_data['Delta'].append(delta)
+            delta_data['Rotations'].append(rotations)
 
 
     delta_df = pd.DataFrame(delta_data)

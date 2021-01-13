@@ -20,13 +20,6 @@ def recreateStructure(Xtilt_real, Ytilt_real):
 
         for y in range(size_y - 1):
             for x in range(size_x - 1):
-                y_val = y
-                x_val = x
-
-                Ax = Zheight_recreated[y, x + 1]
-                Cx = Zheight_recreated[y + 1, x + 1]
-                Bx = Zheight_recreated[y, x]
-                Dx = Zheight_recreated[y + 1, x]
 
                 tempX = (Zheight_recreated[y, x + 1] + Zheight_recreated[y + 1, x + 1]) / 2 - (
                             Zheight_recreated[y, x] + Zheight_recreated[y + 1, x]) / 2
@@ -35,11 +28,6 @@ def recreateStructure(Xtilt_real, Ytilt_real):
 
                 Xtilt_recreated[y, x] = tempX_deg
 
-                Ay = Zheight_recreated[y + 1, x]
-                By = Zheight_recreated[y + 1, x + 1]
-                Cy = Zheight_recreated[y, x]
-                Dy = Zheight_recreated[y, x + 1]
-
                 tempY = (Zheight_recreated[y + 1, x] + Zheight_recreated[y + 1, x + 1]) / 2 - (
                             Zheight_recreated[y, x] + Zheight_recreated[y, x + 1]) / 2
                 tempY_rad = atan(tempY / 725)
@@ -47,8 +35,6 @@ def recreateStructure(Xtilt_real, Ytilt_real):
 
                 Ytilt_recreated[y, x] = tempY_deg
 
-                # Xtilt_recreated[y, x] = (Zheight_recreated[y, x+1] - Zheight_recreated[y, x] + Zheight_recreated[y+1, x+1] - Zheight_recreated[y+1, x])/2
-                # Ytilt_recreated[y, x] = (Zheight_recreated[y+1, x] - Zheight_recreated[y, x] + Zheight_recreated[y+1, x+1] - Zheight_recreated[y, x+1])/2
 
         # calculate difference between real X-tilt values and recreated X-tilt values
         Xtilt_error = np.subtract(Xtilt_real, Xtilt_recreated)

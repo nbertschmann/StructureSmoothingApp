@@ -4,9 +4,11 @@ def formatData(data):
 
     column_x = data['X']
     max_x = column_x.max()
+    max_x = int(max_x) + 1
 
     column_y = data['Y']
     max_y = column_y.max()
+    max_y = int(max_y) + 1
 
     xtilt_real = np.zeros((max_y, max_x), float)
     ytilt_real = np.zeros((max_y, max_x), float)

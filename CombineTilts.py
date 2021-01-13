@@ -12,12 +12,12 @@ def combineTilts(data):
                 pitch = data.loc[(data['X'] == x) & (data['Y'] == y) & (data['Z'] == z), 'Pitch']
                 pitch_sum = pitch.sum()
                 pitch_average = pitch_sum / len(pitch)
-                pitch_average = round(pitch_average, 2)
+                pitch_average = round(pitch_average, 6)
 
                 roll = data.loc[(data['X'] == x) & (data['Y'] == y) & (data['Z'] == z), 'Roll']
                 roll_sum = roll.sum()
                 roll_average = roll_sum / len(roll)
-                roll_average = round(roll_average, 2)
+                roll_average = round(roll_average, 6)
 
                 temp_results = {'DM': datamatrix, 'X': [x], 'Y': [y], 'Z': [z], 'Pitch': [pitch_average],
                                 'Roll': [roll_average]}

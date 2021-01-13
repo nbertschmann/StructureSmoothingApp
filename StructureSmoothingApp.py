@@ -18,10 +18,40 @@ from PyQt5.QtCore import QAbstractItemModel
 
 import sys
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QObject
 import pandas as pd
 
+from PyQt5.QtCore import pyqtSlot, pyqtSignal
+from PyQt5.QtCore import QRunnable
+import time
+import traceback, sys
 
+import plotly.graph_objects as go
+
+
+
+class WorkerSignals(QObject):
+
+    clearTabs = pyqtSignal()
+    plotStruct = pyqtSignal(go.Figure, go.Figure)
+
+class Worker(QRunnable):
+
+    def __init__(self, fn, *args, **kwargs):
+        super(Worker, self).__init__()
+        # Store constructor arguments (re-used for processing)
+        self.fn = fn
+        self.args = args
+        self.kwargs = kwargs
+        self.signals = WorkerSignals()
+
+        self.kwargs['clear_tabs_callback'] = self.signals.clearTabs
+        self.kwargs['plot_callback'] = self.signals.plotStruct
+
+    @pyqtSlot()
+    def run(self):
+
+        self.fn(*self.args, **self.kwargs)
 
 
 class StructureSmooth(QWidget):
@@ -44,7 +74,7 @@ class StructureSmooth(QWidget):
         self.browse_box1.setReadOnly(True)
 
         self.plotDisplay_tab = QtWidgets.QTabWidget()
-        self.plotDisplay_tab.setTabsClosable(True)
+        # self.plotDisplay_tab.setTabsClosable(True)
 
         self.browse_layout1 = QtWidgets.QHBoxLayout()
         self.browse_layout1.addWidget(self.browse_button1)
@@ -95,6 +125,7 @@ class StructureSmooth(QWidget):
         self.disableButtons()
         self.initUI()
         self.connect()
+        self.threadpool = QThreadPool()
 
     def disableButtons(self):
 
@@ -105,10 +136,18 @@ class StructureSmooth(QWidget):
 
         model = QtGui.QStandardItemModel()
         model.setHorizontalHeaderLabels(['DM', 'X', 'Y', 'Z', 'Pitch', 'Roll'])
-        table = QtWidgets.QTableView()
-        table.setModel(model)
 
-        header = table.horizontalHeader()
+        self.table = QtWidgets.QTableView()
+
+        # font = QtGui.QFont()
+        # font.setBold(True)
+        #
+        # self.table.horizontalHeader().setFont(font)
+        # self.table.verticalHeader().setFont(font)
+
+        self.table.setModel(model)
+
+        header = self.table.horizontalHeader()
         header.setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
         header.setSectionResizeMode(1, QtWidgets.QHeaderView.Stretch)
         header.setSectionResizeMode(2, QtWidgets.QHeaderView.Stretch)
@@ -116,17 +155,22 @@ class StructureSmooth(QWidget):
         header.setSectionResizeMode(4, QtWidgets.QHeaderView.Stretch)
         header.setSectionResizeMode(5, QtWidgets.QHeaderView.Stretch)
 
-        return table
+        return self.table
 
     def init_FileViewer(self):
         self.model = QtWidgets.QFileSystemModel()
+
+
 
         tree = QtWidgets.QTreeView()
         tree.setModel(self.model)
         tree.setAlternatingRowColors(True)
 
+        font = QtGui.QFont()
+        font.setBold(True)
+
         header = tree.header()
-        # header.setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
+        # header.setFont(font)
         header.setSectionResizeMode(1, QtWidgets.QHeaderView.Stretch)
         header.setSectionResizeMode(2, QtWidgets.QHeaderView.Stretch)
         header.setSectionResizeMode(3, QtWidgets.QHeaderView.Stretch)
@@ -152,7 +196,7 @@ class StructureSmooth(QWidget):
         self.browse_button1.clicked.connect(self.browseFiles1)
         self.browse_button2.clicked.connect(self.browseFiles2)
         self.analyzeLogs_button.clicked.connect(self.analyzeLogs)
-        self.plotStructure_button.clicked.connect(self.plotStructure)
+        self.plotStructure_button.clicked.connect(self.start)
 
     def browseFiles1(self):
 
@@ -189,7 +233,6 @@ class StructureSmooth(QWidget):
             self.set_FileViewer()
 
 
-
     def analyzeLogs(self):
 
         log_array = []
@@ -201,9 +244,6 @@ class StructureSmooth(QWidget):
 
         if not os.path.exists(output_path):
             os.mkdir(output_path)
-
-        logDataRaw_path = os.path.join(output_path, logDataRaw_name)
-        logDataCombined_path = os.path.join(output_path, logDataCombined_name)
 
         for file in self.file_arr:
             if 'tblStruct' in file:
@@ -231,15 +271,22 @@ class StructureSmooth(QWidget):
         log_data_raw = pd.concat(df_array)
         log_data_combined = combineTilts(log_data_raw)
 
+        font = QtGui.QFont()
+        font.setBold(True)
+
+        self.table.horizontalHeader().setFont(font)
+        self.table.verticalHeader().setFont(font)
+
         model = TableModel(log_data_combined)
+
         self.table_display.setModel(model)
 
-        log_data_raw.to_csv(logDataRaw_path)
-        log_data_combined.to_csv(logDataCombined_path)
+        writeToCSV(log_data_raw, output_path, logDataRaw_name)
+        writeToCSV(log_data_combined, output_path, logDataCombined_name)
 
-        pass
+    def plotStructure(self, clear_tabs_callback, plot_callback):
 
-    def plotStructure(self):
+        clear_tabs_callback.emit()
 
         postHeight_file = 'postHeights.csv'
 
@@ -266,21 +313,42 @@ class StructureSmooth(QWidget):
 
         Zheight_recreated, Zheight_lowpass, Zheight_delta = recreateStructure(xtilt_real, ytilt_real)
 
-        currentStructure_plot = plotArray(Zheight_recreated, -30, 30)
-        newStructure_plot = plotArray(Zheight_lowpass, -30, 30)
-
-        currentStructure_html = showQT(currentStructure_plot)
-        newStructure_html = showQT(newStructure_plot)
-
         postHeight_data = modifyPostHeights(Zheight_delta)
 
         writeToCSV(postHeight_data, self.postHeight_path, postHeight_file)
 
+        currentStructure_plot = plotArray(Zheight_recreated, -10, 10)
+        newStructure_plot = plotArray(Zheight_lowpass, -30, 30)
+
+        plot_callback.emit(currentStructure_plot, newStructure_plot)
+
+        pass
+
+    def plotIt(self, currentStructure_plot, newStructure_plot):
+
+        currentStructure_html = showQT(currentStructure_plot)
+        newStructure_html = showQT(newStructure_plot)
 
         self.plotDisplay_tab.addTab(currentStructure_html, 'Current Structure')
         self.plotDisplay_tab.addTab(newStructure_html, 'New Structure')
 
-        pass
+        self.plotStructure_button.setEnabled(True)
+
+
+    def start(self):
+
+        # Pass the function to execute
+        worker = Worker(self.plotStructure)  # Any other args, kwargs are passed to the run function
+
+        worker.signals.clearTabs.connect(self.clearPlotTabs)
+        worker.signals.plotStruct.connect(self.plotIt)
+
+        self.threadpool.start(worker)
+
+    def clearPlotTabs(self):
+
+        self.plotDisplay_tab.clear()
+        self.plotStructure_button.setDisabled(True)
 
     def showErrorMessage(self, title, error_message):
         msg = QtWidgets.QMessageBox()

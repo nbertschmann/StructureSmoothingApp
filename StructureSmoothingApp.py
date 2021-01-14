@@ -1,5 +1,6 @@
 from ParseLogs import parseLogs
 from CombineTilts import combineTilts
+from CombineTilts2 import combineTilts2
 from WriteToCSV import writeToCSV
 from FormatData import formatData
 from RecreateStructure import recreateStructure
@@ -35,7 +36,8 @@ class WorkerSignals(QObject):
     clearTabs = pyqtSignal()
     plotStruct = pyqtSignal(go.Figure, go.Figure)
     errorMessage = pyqtSignal(str, str)
-    abortProgram = pyqtSignal( )
+    abortProgram = pyqtSignal()
+    showProgress = pyqtSignal(int, str)
 
 class Worker(QRunnable):
 
@@ -51,7 +53,7 @@ class Worker(QRunnable):
         self.kwargs['plot_callback'] = self.signals.plotStruct
         self.kwargs['error_message_callback'] = self.signals.errorMessage
         self.kwargs['abort_callback'] = self.signals.abortProgram
-
+        self.kwargs['progress_callback'] = self.signals.showProgress
     @pyqtSlot()
     def run(self):
 
@@ -70,6 +72,12 @@ class StructureSmooth(QWidget):
         self.postHeight_path = ''
         self.file_arr = []
 
+        self.global_str = ''
+        self.format_str = ''
+        self.combineTilts_str = ''
+        self.recreateStruct_str = ''
+        self.modifyPost_str = ''
+
         self.setWindowIcon(QtGui.QIcon('structure3.ico'))
         self.my_layout = QtWidgets.QVBoxLayout(self)
 
@@ -79,7 +87,8 @@ class StructureSmooth(QWidget):
         self.browse_box1.setReadOnly(True)
 
         self.plotDisplay_tab = QtWidgets.QTabWidget()
-        # self.plotDisplay_tab.setTabsClosable(True)
+
+        self.progressBox = QtWidgets.QTextEdit()
 
         self.browse_layout1 = QtWidgets.QHBoxLayout()
         self.browse_layout1.addWidget(self.browse_button1)
@@ -87,7 +96,8 @@ class StructureSmooth(QWidget):
 
         self.tab_layout1 = QtWidgets.QVBoxLayout()
         self.tab_layout1.addLayout(self.browse_layout1)
-        self.tab_layout1.addWidget(self.plotDisplay_tab)
+        self.tab_layout1.addWidget(self.plotDisplay_tab,6)
+        self.tab_layout1.addWidget(self.progressBox, 1)
         self.tab_layout1.addWidget(self.plotStructure_button)
 
         self.analyzeLogs_button = QtWidgets.QPushButton("Analyze Logs")
@@ -274,7 +284,7 @@ class StructureSmooth(QWidget):
             df_array.append(log_data)
 
         log_data_raw = pd.concat(df_array)
-        log_data_combined = combineTilts(log_data_raw)
+        log_data_combined = combineTilts2(log_data_raw)
 
         font = QtGui.QFont()
         font.setBold(True)
@@ -289,10 +299,9 @@ class StructureSmooth(QWidget):
         writeToCSV(log_data_raw, output_path, logDataRaw_name)
         writeToCSV(log_data_combined, output_path, logDataCombined_name)
 
-    def plotStructure(self, clear_tabs_callback, plot_callback, error_message_callback, abort_callback):
+    def plotStructure(self, clear_tabs_callback, plot_callback, error_message_callback, abort_callback, progress_callback):
 
         clear_tabs_callback.emit()
-
         postHeight_file = 'postHeights.csv'
 
         if self.file_path.endswith('.csv'):
@@ -320,25 +329,27 @@ class StructureSmooth(QWidget):
 
             return 0
 
-        structureData = combineTilts(structureData_raw)
+        structureData = combineTilts(structureData_raw, progress_callback)
 
-        xtilt_real, ytilt_real = formatData(structureData)
+        xtilt_real, ytilt_real = formatData(structureData, progress_callback)
 
-        Zheight_recreated, Zheight_lowpass, Zheight_delta = recreateStructure(xtilt_real, ytilt_real)
+        Zheight_recreated, Zheight_lowpass, Zheight_delta = recreateStructure(xtilt_real, ytilt_real, progress_callback)
 
         postHeight_data = modifyPostHeights(Zheight_delta)
 
         writeToCSV(postHeight_data, self.postHeight_path, postHeight_file)
 
-        currentStructure_plot = plotArray(Zheight_recreated, -10, 10)
+        currentStructure_plot = plotArray(Zheight_recreated, -30, 30)
         newStructure_plot = plotArray(Zheight_lowpass, -30, 30)
 
+        progress_callback.emit(4, 'Generating Plots...')
         plot_callback.emit(currentStructure_plot, newStructure_plot)
 
         pass
 
     def plotIt(self, currentStructure_plot, newStructure_plot):
 
+        print("Plot Function")
         currentStructure_html = showQT(currentStructure_plot)
         newStructure_html = showQT(newStructure_plot)
 
@@ -346,7 +357,9 @@ class StructureSmooth(QWidget):
         self.plotDisplay_tab.addTab(newStructure_html, 'New Structure')
 
         self.plotStructure_button.setEnabled(True)
+        # self.progressBox.append('Plotting Complete')
 
+        print("Done Plotting")
 
     def start(self):
 
@@ -357,18 +370,48 @@ class StructureSmooth(QWidget):
         worker.signals.plotStruct.connect(self.plotIt)
         worker.signals.errorMessage.connect(self.showErrorMessage)
         worker.signals.abortProgram.connect(self.abortNow)
+        worker.signals.showProgress.connect(self.progress)
 
         self.threadpool.start(worker)
 
+
+    def progress(self, progress_type, progress_str):
+        # print("Progress: " + progress_str)
+
+
+        if progress_type == 0:
+
+            self.format_str = progress_str
+            self.global_str = self.format_str
+            self.progressBox.setText(self.global_str)
+
+        if progress_type == 1:
+            self.combineTilts_str = progress_str
+            self.global_str = self.format_str + '\n' + self.combineTilts_str
+            self.progressBox.setText(self.global_str)
+
+        if progress_type == 2:
+            self.recreateStruct_str = progress_str
+            self.global_str = self.format_str + '\n' + self.combineTilts_str + '\n' + self.recreateStruct_str
+            self.progressBox.setText(self.global_str)
+
+        if progress_type == 3:
+            self.modifyPost_str = progress_str
+            self.global_str = self.format_str + '\n' + self.combineTilts_str + '\n' + self.recreateStruct_str + '\n' + self.modifyPost_str
+            self.progressBox.setText(self.global_str)
+
+        if progress_type == 4:
+            self.global_str = self.global_str = self.format_str + '\n' + self.combineTilts_str + '\n' + self.recreateStruct_str + '\n' + self.modifyPost_str + '\n' + progress_str
+            self.progressBox.setText(self.global_str)
 
     def abortNow(self):
 
         self.plotStructure_button.setEnabled(True)
 
-
     def clearPlotTabs(self):
 
         self.plotDisplay_tab.clear()
+        self.progressBox.clear()
         self.plotStructure_button.setDisabled(True)
 
     def showErrorMessage(self, title, error_message):
@@ -379,9 +422,6 @@ class StructureSmooth(QWidget):
 
         height = float(self.size().height())
         width = float(self.size().width())
-
-        errorBox_height = msg.size().height()
-        errorBox_width = msg.width()
 
         errorBoxPos_X = pos_X + width/2 - 250
         errorBoxPos_Y = pos_Y + height/2

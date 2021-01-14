@@ -1,6 +1,6 @@
 import numpy as np
 
-def formatData(data):
+def formatData(data, progress_callback):
 
     column_x = data['X']
     max_x = column_x.max()
@@ -12,6 +12,9 @@ def formatData(data):
 
     xtilt_real = np.zeros((max_y, max_x), float)
     ytilt_real = np.zeros((max_y, max_x), float)
+
+    size = max_x * max_y
+    count = 0
 
     for y in range(max_y):
         for x in range(max_x):
@@ -31,5 +34,8 @@ def formatData(data):
                 y_val = y_list[0]
                 ytilt_real[y, x] = y_val
 
+            progress_string = "Format Data - " + str(count + 1) + ' / ' + str(size)
+            progress_callback.emit(1, progress_string)
+            count += 1
 
     return xtilt_real, ytilt_real

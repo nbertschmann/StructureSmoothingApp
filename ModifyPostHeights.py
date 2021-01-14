@@ -9,6 +9,9 @@ def modifyPostHeights(Zheight_delta):
     size_y = len(Zheight_delta)
     z = 0
 
+    total_size = size_x * size_y
+    count = 0
+
     for x in range(size_x):
 
         for y in range(size_y):
@@ -24,6 +27,11 @@ def modifyPostHeights(Zheight_delta):
             delta_data['Z'].append(z)
             delta_data['Delta'].append(delta)
             delta_data['Rotations'].append(rotations)
+
+            # progress_string = 'Modify Post Heights - ' + str(count + 1) + ' / ' + str(total_size)
+            # progress_callback.emit(3, progress_string)
+
+            count += 1
 
 
     delta_df = pd.DataFrame(delta_data)

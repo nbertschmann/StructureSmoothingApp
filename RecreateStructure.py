@@ -2,7 +2,7 @@ import numpy as np
 from math import atan, pi
 from BlurArray import blur
 
-def recreateStructure(Xtilt_real, Ytilt_real):
+def recreateStructure(Xtilt_real, Ytilt_real, progress_callback):
 
     size_x = len(Xtilt_real[0]) + 1
     size_y = len(Xtilt_real) + 1
@@ -45,7 +45,7 @@ def recreateStructure(Xtilt_real, Ytilt_real):
         for x in range(size_x):
             for y in range(size_y):
 
-                print('x:' + str(x) + ' y:' + str(y))
+                # print('x:' + str(x) + ' y:' + str(y))
 
                 if (x == 3):
                     pass
@@ -87,6 +87,10 @@ def recreateStructure(Xtilt_real, Ytilt_real):
 
                 Zheight_recreated[y, x] = Zheight_recreated[y, x] + ((adj_y + adj_x) * 0.25)
 
+        if (i + 1) % 1 == 0:
+            progress_val = 'Recreate Structure - ' + str(i + 1) + ' / 1000'
+            progress_callback.emit(2, progress_val)
+
     Zheight_recreated = Zheight_recreated - np.mean(Zheight_recreated)
 
     Zheight_lowpass = Zheight_recreated
@@ -97,5 +101,6 @@ def recreateStructure(Xtilt_real, Ytilt_real):
 
     Zheight_delta = np.subtract(Zheight_lowpass, Zheight_recreated)
 
-    pass
+
+
     return Zheight_recreated, Zheight_lowpass, Zheight_delta

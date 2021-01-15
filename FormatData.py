@@ -13,8 +13,9 @@ def formatData(data, progress_callback):
     xtilt_real = np.zeros((max_y, max_x), float)
     ytilt_real = np.zeros((max_y, max_x), float)
 
-    size = max_x * max_y
+    data_size = max_x * max_y
     count = 0
+    last_progress = 0
 
     for y in range(max_y):
         for x in range(max_x):
@@ -34,8 +35,15 @@ def formatData(data, progress_callback):
                 y_val = y_list[0]
                 ytilt_real[y, x] = y_val
 
-            progress_string = "Format Data - " + str(count + 1) + ' / ' + str(size)
-            progress_callback.emit(1, progress_string)
+            progress_percent = (count / data_size) * 100
+            progress_percent = round(progress_percent, 0)
+            progress_percent = int(progress_percent)
+
+            if progress_percent > last_progress:
+                last_progress = progress_percent
+
+                progress_callback.emit(progress_percent, 'Running Process 2 / 3 ...')
+
             count += 1
 
     return xtilt_real, ytilt_real

@@ -3,8 +3,12 @@ import re
 import csv
 import pandas as pd
 import os
+def parseLogs(log_path, structureVerification_path, log_ct, log_total, progress_callback):
 
-def parseLogs(log_path, structureVerification_path):
+    print('\\\\')
+    file_name = log_path.strip().split('\\')[-1]
+    progress_text = "Processing File " + str(log_ct + 1) + ' / ' + str(log_total) + ': ' + file_name
+    progress_callback.emit(0, progress_text)
 
     log_file_ct = open(log_path, "r", encoding='utf8', errors='ignore')
     log_file = open(log_path, "r", encoding='utf8', errors='ignore')
@@ -13,10 +17,19 @@ def parseLogs(log_path, structureVerification_path):
 
     row_count = sum(1 for row in log_file_ct)
     count = 0
+    last_progress = 0
 
     for line in log_file:
 
         count += 1
+
+        progress_percent = (count/row_count) * 100
+        progress_percent = round(progress_percent, 0)
+        progress_percent = int(progress_percent)
+
+        if progress_percent > last_progress:
+            last_progress = progress_percent
+            progress_callback.emit(progress_percent, progress_text)
 
         try:
 

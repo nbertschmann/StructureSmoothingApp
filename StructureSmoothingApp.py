@@ -39,13 +39,17 @@ class WorkerSignals(QObject):
     errorMessage1 = pyqtSignal(str, str)
     abortProgram1 = pyqtSignal()
     showProgress1 = pyqtSignal(int, str)
+    begin1 = pyqtSignal()
+    finish1 = pyqtSignal()
 
     # Signals for log parsing/display
     clearTable2 = pyqtSignal()
     displayTable2 = pyqtSignal(pd.DataFrame)
     errorMessage2 = pyqtSignal(str, str)
     abortProgram2 = pyqtSignal()
-    showProgress2 = pyqtSignal()
+    showProgress2 = pyqtSignal(int, str)
+    begin2 = pyqtSignal()
+    finish2 = pyqtSignal()
 
 
 
@@ -65,6 +69,10 @@ class Worker1(QRunnable):
         self.kwargs['error_message_callback'] = self.signals.errorMessage1
         self.kwargs['abort_callback'] = self.signals.abortProgram1
         self.kwargs['progress_callback'] = self.signals.showProgress1
+        self.kwargs['begin_callback'] = self.signals.begin1
+        self.kwargs['finish_callback'] = self.signals.finish1
+
+
     @pyqtSlot()
     def run(self):
 
@@ -88,6 +96,8 @@ class Worker2(QRunnable):
         self.kwargs['error_message_callback'] = self.signals.errorMessage2
         self.kwargs['abort_callback'] = self.signals.abortProgram2
         self.kwargs['progress_callback'] = self.signals.showProgress2
+        self.kwargs['begin_callback'] = self.signals.begin2
+        self.kwargs['finish_callback'] = self.signals.finish2
 
     @pyqtSlot()
     def run(self):
@@ -113,6 +123,8 @@ class StructureSmooth(QWidget):
         self.modifyPost_str = ''
 
         self.setWindowIcon(QtGui.QIcon('structure3.ico'))
+
+        # ********************************************** Tab 1 Layout **************************************************
         self.my_layout = QtWidgets.QVBoxLayout(self)
 
         self.plotStructure_button = QPushButton("Create Plots")
@@ -120,9 +132,12 @@ class StructureSmooth(QWidget):
         self.browse_box1 = QtWidgets.QLineEdit()
         self.browse_box1.setReadOnly(True)
 
+        self.progressBar1 = QtWidgets.QProgressBar()
+        self.progressBar1.setValue(0)
+        self.progressLabel1 = QtWidgets.QLabel()
+
         self.plotDisplay_tab = QtWidgets.QTabWidget()
 
-        self.progressBox = QtWidgets.QTextEdit()
 
         self.browse_layout1 = QtWidgets.QHBoxLayout()
         self.browse_layout1.addWidget(self.browse_button1)
@@ -130,14 +145,17 @@ class StructureSmooth(QWidget):
 
         self.tab_layout1 = QtWidgets.QVBoxLayout()
         self.tab_layout1.addLayout(self.browse_layout1)
-        self.tab_layout1.addWidget(self.plotDisplay_tab,6)
-        self.tab_layout1.addWidget(self.progressBox, 1)
+        self.tab_layout1.addWidget(self.plotDisplay_tab, 6)
+        self.tab_layout1.addWidget(self.progressLabel1)
+        self.tab_layout1.addWidget(self.progressBar1)
         self.tab_layout1.addWidget(self.plotStructure_button)
 
+        # ********************************************** Tab 2 Layout **************************************************
         self.analyzeLogs_button = QtWidgets.QPushButton("Analyze Logs")
         self.browse_button2 = QtWidgets.QPushButton('Browse')
         self.browse_box2 = QtWidgets.QLineEdit()
         self.browse_box2.setReadOnly(True)
+
 
         self.table_display = self.initTable()
 
@@ -145,14 +163,22 @@ class StructureSmooth(QWidget):
         self.browse_layout2.addWidget(self.browse_button2)
         self.browse_layout2.addWidget(self.browse_box2)
 
+        self.progressBar2 = QtWidgets.QProgressBar()
+        self.progressBar2.setValue(0)
+
+        self.progressLabel2 = QtWidgets.QLabel()
+
         self.tree = self.init_FileViewer()
 
         self.tab_layout2 = QtWidgets.QVBoxLayout()
         self.tab_layout2.addLayout(self.browse_layout2)
         self.tab_layout2.addWidget(self.tree, 1)
-        self.tab_layout2.addWidget(self.table_display,3)
+        self.tab_layout2.addWidget(self.table_display, 3)
+        self.tab_layout2.addWidget(self.progressLabel2)
+        self.tab_layout2.addWidget(self.progressBar2)
         self.tab_layout2.addWidget(self.analyzeLogs_button)
 
+        # *********************************************** Creating Tabs ************************************************
         self.tab1 = QWidget()
         self.tab2 = QWidget()
 
@@ -202,8 +228,6 @@ class StructureSmooth(QWidget):
 
     def init_FileViewer(self):
         self.model = QtWidgets.QFileSystemModel()
-
-
 
         tree = QtWidgets.QTreeView()
         tree.setModel(self.model)
@@ -276,8 +300,9 @@ class StructureSmooth(QWidget):
             self.set_FileViewer()
 
 
-    def analyzeLogs(self, clear_table_callback ,display_table_callback, error_message_callback, abort_callback, progress_callback):
+    def analyzeLogs(self, clear_table_callback ,display_table_callback, error_message_callback, abort_callback, progress_callback, begin_callback ,finish_callback):
 
+        begin_callback.emit()
         clear_table_callback.emit()
 
         log_array = []
@@ -309,15 +334,20 @@ class StructureSmooth(QWidget):
             abort_callback.emit()
             return 0
 
-        for file in log_array:
+        for log_ct, file in enumerate(log_array):
+
+            log_total = len(log_array)
+
             log_path = os.path.join(self.folder_path, file)
-            log_data = parseLogs(log_path, structureVerfication_file)
+            log_data = parseLogs(log_path, structureVerfication_file,  log_ct, log_total, progress_callback)
             df_array.append(log_data)
 
         log_data_raw = pd.concat(df_array)
         log_data_combined = combineTilts2(log_data_raw)
 
         display_table_callback.emit(log_data_combined)
+
+        finish_callback.emit()
         writeToCSV(log_data_raw, output_path, logDataRaw_name)
         writeToCSV(log_data_combined, output_path, logDataCombined_name)
 
@@ -342,12 +372,16 @@ class StructureSmooth(QWidget):
 
         self.table_display.setModel(model)
 
+        if len(data) != 0:
+            self.progressLabel2.setText('Complete.')
 
-        self.analyzeLogs_button.setEnabled(True)
 
 
-    def plotStructure(self, clear_tabs_callback, plot_callback, error_message_callback, abort_callback, progress_callback):
 
+
+    def plotStructure(self, clear_tabs_callback, plot_callback, error_message_callback, abort_callback, progress_callback, begin_callback, finish_callback):
+
+        begin_callback.emit()
         clear_tabs_callback.emit()
         postHeight_file = 'postHeights.csv'
 
@@ -389,12 +423,8 @@ class StructureSmooth(QWidget):
         currentStructure_plot = plotArray(Zheight_recreated, -30, 30)
         newStructure_plot = plotArray(Zheight_lowpass, -30, 30)
 
-        progress_callback.emit(4, 'Generating Plots...')
         plot_callback.emit(currentStructure_plot, newStructure_plot)
-
-        pass
-
-
+        finish_callback.emit()
 
     def plotIt(self, currentStructure_plot, newStructure_plot):
 
@@ -406,9 +436,10 @@ class StructureSmooth(QWidget):
         self.plotDisplay_tab.addTab(newStructure_html, 'New Structure')
 
         self.plotStructure_button.setEnabled(True)
-        # self.progressBox.append('Plotting Complete')
 
-        print("Done Plotting")
+        self.progressLabel1.setText('Complete.')
+
+
 
     def start1(self):
 
@@ -420,6 +451,8 @@ class StructureSmooth(QWidget):
         worker.signals.errorMessage1.connect(self.showErrorMessage)
         worker.signals.abortProgram1.connect(self.abortNow1)
         worker.signals.showProgress1.connect(self.progress1)
+        worker.signals.begin1.connect(self.begin)
+        worker.signals.finish1.connect(self.finish)
 
         self.threadpool.start(worker)
 
@@ -432,69 +465,70 @@ class StructureSmooth(QWidget):
         worker.signals.showProgress2.connect(self.progress2)
         worker.signals.abortProgram2.connect(self.abortNow2)
         worker.signals.clearTable2.connect(self.clearTable)
+        worker.signals.begin2.connect(self.begin)
+        worker.signals.finish2.connect(self.finish)
 
         self.threadpool.start(worker)
 
+    def begin(self):
 
+        self.analyzeLogs_button.setDisabled(True)
+        self.browse_button2.setDisabled(True)
+        self.plotStructure_button.setDisabled(True)
+        self.browse_button1.setDisabled(True)
 
-    def progress1(self, progress_type, progress_str):
-        # print("Progress: " + progress_str)
+    def finish(self):
 
+        self.analyzeLogs_button.setEnabled(True)
+        self.browse_button2.setEnabled(True)
+        self.plotStructure_button.setEnabled(True)
+        self.browse_button1.setEnabled(True)
 
-        if progress_type == 0:
+        if self.browse_box2.text() != '':
+            self.analyzeLogs_button.setEnabled(True)
 
-            self.format_str = progress_str
-            self.global_str = self.format_str
-            self.progressBox.setText(self.global_str)
+        if self.browse_box1.text() != '':
+            self.plotStructure_button.setEnabled(True)
 
-        if progress_type == 1:
-            self.combineTilts_str = progress_str
-            self.global_str = self.format_str + '\n' + self.combineTilts_str
-            self.progressBox.setText(self.global_str)
+    def progress1(self, progress_percent, progress_str):
 
-        if progress_type == 2:
-            self.recreateStruct_str = progress_str
-            self.global_str = self.format_str + '\n' + self.combineTilts_str + '\n' + self.recreateStruct_str
-            self.progressBox.setText(self.global_str)
+        self.progressLabel1.setText(progress_str)
+        self.progressBar1.setValue(progress_percent)
 
-        if progress_type == 3:
-            self.modifyPost_str = progress_str
-            self.global_str = self.format_str + '\n' + self.combineTilts_str + '\n' + self.recreateStruct_str + '\n' + self.modifyPost_str
-            self.progressBox.setText(self.global_str)
+    def progress2(self, progress_percent, progress_str):
 
-        if progress_type == 4:
-            self.global_str = self.global_str = self.format_str + '\n' + self.combineTilts_str + '\n' + self.recreateStruct_str + '\n' + self.modifyPost_str + '\n' + progress_str
-            self.progressBox.setText(self.global_str)
-
-    def progress2(self):
-        pass
+        self.progressLabel2.setText(progress_str)
+        self.progressBar2.setValue(progress_percent)
 
     def abortNow1(self):
 
+
+        self.browse_button2.setEnabled(True)
         self.plotStructure_button.setEnabled(True)
+        self.browse_button1.setEnabled(True)
+
+        if self.browse_box2.text() != '':
+            self.analyzeLogs_button.setEnabled(True)
 
     def abortNow2(self):
 
         self.analyzeLogs_button.setEnabled(True)
+        self.browse_button2.setEnabled(True)
+        self.browse_button1.setEnabled(True)
+
+        if self.browse_box1.text() != '':
+            self.plotStructure_button.setEnabled(True)
 
     def clearPlotTabs(self):
 
         self.plotDisplay_tab.clear()
-        self.progressBox.clear()
-        self.plotStructure_button.setDisabled(True)
+        self.progressBar1.setValue(0)
 
     def clearTable(self):
 
-        self.analyzeLogs_button.setDisabled(True)
-
         column_names = ['DM', 'X', 'Y', 'Z', 'Pitch', 'Roll']
-
         df = pd.DataFrame(columns=column_names)
-
         self.showTable(df)
-
-
-
 
     def showErrorMessage(self, title, error_message):
         msg = QtWidgets.QMessageBox()

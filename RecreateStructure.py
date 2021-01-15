@@ -9,6 +9,7 @@ def recreateStructure(Xtilt_real, Ytilt_real, progress_callback):
 
     Zheight_recreated = np.zeros((size_y, size_x), float)
 
+    last_progress = 0
 
     for i in range(1000):
 
@@ -87,9 +88,14 @@ def recreateStructure(Xtilt_real, Ytilt_real, progress_callback):
 
                 Zheight_recreated[y, x] = Zheight_recreated[y, x] + ((adj_y + adj_x) * 0.25)
 
-        if (i + 1) % 1 == 0:
-            progress_val = 'Recreate Structure - ' + str(i + 1) + ' / 1000'
-            progress_callback.emit(2, progress_val)
+        progress_percent = (i / 1000) * 100
+        progress_percent = round(progress_percent, 0)
+        progress_percent = int(progress_percent)
+
+        if progress_percent > last_progress:
+            last_progress = progress_percent
+
+            progress_callback.emit(progress_percent, 'Running Process 3 / 3 ...')
 
     Zheight_recreated = Zheight_recreated - np.mean(Zheight_recreated)
 

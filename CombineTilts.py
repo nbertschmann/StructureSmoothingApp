@@ -2,11 +2,9 @@ import pandas as pd
 def combineTilts(data, progress_callback):
     data_out = pd.DataFrame()
 
-    # remove attic data
-    # data = data.drop(data[(data['Z'] != 0)].index)
-
     count = 0
     data_size = 0
+    last_progress = 0
 
     for x in data['X'].unique():
         for y in data.loc[(data['X'] == x), 'Y'].unique():
@@ -16,8 +14,15 @@ def combineTilts(data, progress_callback):
 
         for y in data.loc[(data['X'] == x), 'Y'].unique():
 
-            progress_str = 'Combine Tilts - ' + str(count + 1) + ' / ' + str(data_size)
-            progress_callback.emit(0, progress_str)
+            progress_percent = (count / data_size) * 100
+            progress_percent = round(progress_percent, 0)
+            progress_percent = int(progress_percent)
+
+            if progress_percent > last_progress:
+                last_progress = progress_percent
+
+                progress_callback.emit(progress_percent, 'Running Process 1 / 3 ...')
+
             count += 1
 
             for z in data.loc[(data['X'] == x) & (data['Y'] == y), 'Z'].unique():

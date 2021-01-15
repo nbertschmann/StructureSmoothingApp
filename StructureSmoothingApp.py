@@ -33,33 +33,67 @@ import plotly.graph_objects as go
 
 class WorkerSignals(QObject):
 
-    clearTabs = pyqtSignal()
-    plotStruct = pyqtSignal(go.Figure, go.Figure)
-    errorMessage = pyqtSignal(str, str)
-    abortProgram = pyqtSignal()
-    showProgress = pyqtSignal(int, str)
+    # Signals for structure plotting
+    clearTabs1 = pyqtSignal()
+    plotStruct1 = pyqtSignal(go.Figure, go.Figure)
+    errorMessage1 = pyqtSignal(str, str)
+    abortProgram1 = pyqtSignal()
+    showProgress1 = pyqtSignal(int, str)
 
-class Worker(QRunnable):
+    # Signals for log parsing/display
+    clearTable2 = pyqtSignal()
+    displayTable2 = pyqtSignal(pd.DataFrame)
+    errorMessage2 = pyqtSignal(str, str)
+    abortProgram2 = pyqtSignal()
+    showProgress2 = pyqtSignal()
+
+
+
+
+class Worker1(QRunnable):
 
     def __init__(self, fn, *args, **kwargs):
-        super(Worker, self).__init__()
+        super(Worker1, self).__init__()
         # Store constructor arguments (re-used for processing)
         self.fn = fn
         self.args = args
         self.kwargs = kwargs
         self.signals = WorkerSignals()
 
-        self.kwargs['clear_tabs_callback'] = self.signals.clearTabs
-        self.kwargs['plot_callback'] = self.signals.plotStruct
-        self.kwargs['error_message_callback'] = self.signals.errorMessage
-        self.kwargs['abort_callback'] = self.signals.abortProgram
-        self.kwargs['progress_callback'] = self.signals.showProgress
+        self.kwargs['clear_tabs_callback'] = self.signals.clearTabs1
+        self.kwargs['plot_callback'] = self.signals.plotStruct1
+        self.kwargs['error_message_callback'] = self.signals.errorMessage1
+        self.kwargs['abort_callback'] = self.signals.abortProgram1
+        self.kwargs['progress_callback'] = self.signals.showProgress1
     @pyqtSlot()
     def run(self):
 
         result = self.fn(*self.args, **self.kwargs)
         print(str(result))
 
+
+
+class Worker2(QRunnable):
+
+    def __init__(self, fn, *args, **kwargs):
+        super(Worker2, self).__init__()
+        # Store constructor arguments (re-used for processing)
+        self.fn = fn
+        self.args = args
+        self.kwargs = kwargs
+        self.signals = WorkerSignals()
+
+        self.kwargs['clear_table_callback'] = self.signals.clearTable2
+        self.kwargs['display_table_callback'] = self.signals.displayTable2
+        self.kwargs['error_message_callback'] = self.signals.errorMessage2
+        self.kwargs['abort_callback'] = self.signals.abortProgram2
+        self.kwargs['progress_callback'] = self.signals.showProgress2
+
+    @pyqtSlot()
+    def run(self):
+
+        result = self.fn(*self.args, **self.kwargs)
+        print(str(result))
 
 class StructureSmooth(QWidget):
     def __init__(self):
@@ -154,12 +188,6 @@ class StructureSmooth(QWidget):
 
         self.table = QtWidgets.QTableView()
 
-        # font = QtGui.QFont()
-        # font.setBold(True)
-        #
-        # self.table.horizontalHeader().setFont(font)
-        # self.table.verticalHeader().setFont(font)
-
         self.table.setModel(model)
 
         header = self.table.horizontalHeader()
@@ -210,8 +238,8 @@ class StructureSmooth(QWidget):
     def connect(self):
         self.browse_button1.clicked.connect(self.browseFiles1)
         self.browse_button2.clicked.connect(self.browseFiles2)
-        self.analyzeLogs_button.clicked.connect(self.analyzeLogs)
-        self.plotStructure_button.clicked.connect(self.start)
+        self.plotStructure_button.clicked.connect(self.start1)
+        self.analyzeLogs_button.clicked.connect(self.start2)
 
     def browseFiles1(self):
 
@@ -248,7 +276,9 @@ class StructureSmooth(QWidget):
             self.set_FileViewer()
 
 
-    def analyzeLogs(self):
+    def analyzeLogs(self, clear_table_callback ,display_table_callback, error_message_callback, abort_callback, progress_callback):
+
+        clear_table_callback.emit()
 
         log_array = []
         df_array = []
@@ -275,7 +305,8 @@ class StructureSmooth(QWidget):
         if error_list:
             error_str = ', '.join(error_list)
 
-            self.showErrorMessage('Error', 'Files Missing: ' + error_str)
+            error_message_callback.emit('Error', 'Files Missing: ' + error_str)
+            abort_callback.emit()
             return 0
 
         for file in log_array:
@@ -286,18 +317,34 @@ class StructureSmooth(QWidget):
         log_data_raw = pd.concat(df_array)
         log_data_combined = combineTilts2(log_data_raw)
 
+        display_table_callback.emit(log_data_combined)
+        writeToCSV(log_data_raw, output_path, logDataRaw_name)
+        writeToCSV(log_data_combined, output_path, logDataCombined_name)
+
+
+    def showTable(self, data):
+
         font = QtGui.QFont()
         font.setBold(True)
 
         self.table.horizontalHeader().setFont(font)
         self.table.verticalHeader().setFont(font)
 
-        model = TableModel(log_data_combined)
+        header = self.table.horizontalHeader()
+        header.setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
+        header.setSectionResizeMode(1, QtWidgets.QHeaderView.Stretch)
+        header.setSectionResizeMode(2, QtWidgets.QHeaderView.Stretch)
+        header.setSectionResizeMode(3, QtWidgets.QHeaderView.Stretch)
+        header.setSectionResizeMode(4, QtWidgets.QHeaderView.Stretch)
+        header.setSectionResizeMode(5, QtWidgets.QHeaderView.Stretch)
+
+        model = TableModel(data)
 
         self.table_display.setModel(model)
 
-        writeToCSV(log_data_raw, output_path, logDataRaw_name)
-        writeToCSV(log_data_combined, output_path, logDataCombined_name)
+
+        self.analyzeLogs_button.setEnabled(True)
+
 
     def plotStructure(self, clear_tabs_callback, plot_callback, error_message_callback, abort_callback, progress_callback):
 
@@ -347,6 +394,8 @@ class StructureSmooth(QWidget):
 
         pass
 
+
+
     def plotIt(self, currentStructure_plot, newStructure_plot):
 
         print("Plot Function")
@@ -361,21 +410,34 @@ class StructureSmooth(QWidget):
 
         print("Done Plotting")
 
-    def start(self):
+    def start1(self):
 
         # Pass the function to execute
-        worker = Worker(self.plotStructure)  # Any other args, kwargs are passed to the run function
+        worker = Worker1(self.plotStructure)  # Any other args, kwargs are passed to the run function
 
-        worker.signals.clearTabs.connect(self.clearPlotTabs)
-        worker.signals.plotStruct.connect(self.plotIt)
-        worker.signals.errorMessage.connect(self.showErrorMessage)
-        worker.signals.abortProgram.connect(self.abortNow)
-        worker.signals.showProgress.connect(self.progress)
+        worker.signals.clearTabs1.connect(self.clearPlotTabs)
+        worker.signals.plotStruct1.connect(self.plotIt)
+        worker.signals.errorMessage1.connect(self.showErrorMessage)
+        worker.signals.abortProgram1.connect(self.abortNow1)
+        worker.signals.showProgress1.connect(self.progress1)
+
+        self.threadpool.start(worker)
+
+    def start2(self):
+
+        worker = Worker2(self.analyzeLogs)
+
+        worker.signals.displayTable2.connect(self.showTable)
+        worker.signals.errorMessage2.connect(self.showErrorMessage)
+        worker.signals.showProgress2.connect(self.progress2)
+        worker.signals.abortProgram2.connect(self.abortNow2)
+        worker.signals.clearTable2.connect(self.clearTable)
 
         self.threadpool.start(worker)
 
 
-    def progress(self, progress_type, progress_str):
+
+    def progress1(self, progress_type, progress_str):
         # print("Progress: " + progress_str)
 
 
@@ -404,15 +466,35 @@ class StructureSmooth(QWidget):
             self.global_str = self.global_str = self.format_str + '\n' + self.combineTilts_str + '\n' + self.recreateStruct_str + '\n' + self.modifyPost_str + '\n' + progress_str
             self.progressBox.setText(self.global_str)
 
-    def abortNow(self):
+    def progress2(self):
+        pass
+
+    def abortNow1(self):
 
         self.plotStructure_button.setEnabled(True)
+
+    def abortNow2(self):
+
+        self.analyzeLogs_button.setEnabled(True)
 
     def clearPlotTabs(self):
 
         self.plotDisplay_tab.clear()
         self.progressBox.clear()
         self.plotStructure_button.setDisabled(True)
+
+    def clearTable(self):
+
+        self.analyzeLogs_button.setDisabled(True)
+
+        column_names = ['DM', 'X', 'Y', 'Z', 'Pitch', 'Roll']
+
+        df = pd.DataFrame(columns=column_names)
+
+        self.showTable(df)
+
+
+
 
     def showErrorMessage(self, title, error_message):
         msg = QtWidgets.QMessageBox()

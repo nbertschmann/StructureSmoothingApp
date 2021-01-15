@@ -6,12 +6,13 @@ import os
 
 def parseLogs(log_path, structureVerification_path):
 
+    log_file_ct = open(log_path, "r", encoding='utf8', errors='ignore')
     log_file = open(log_path, "r", encoding='utf8', errors='ignore')
+
     data = {'DM': [], 'X': [], 'Y': [], 'Z': [], 'Pitch': [], 'Roll': []}
-    #
-    # row_count = sum(1 for row in log_file)
-    #
-    # count = 0
+
+    row_count = sum(1 for row in log_file_ct)
+    count = 0
 
     for line in log_file:
 
@@ -64,6 +65,6 @@ def parseLogs(log_path, structureVerification_path):
             print("[ERROR]: exception={}".format(e))
             print("[ERROR]:  at line =" + line)
 
-    # print(count)
+    print(count)
     my_data = pd.DataFrame(data)
     return my_data

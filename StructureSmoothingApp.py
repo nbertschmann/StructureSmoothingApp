@@ -124,6 +124,8 @@ class StructureSmooth(QWidget):
         self.modifyPost_str = ''
 
         self.setWindowIcon(QtGui.QIcon('structure3.ico'))
+        self.bold_font = QtGui.QFont()
+        self.bold_font.setBold(True)
 
         # ********************************************** Tab 1 Layout **************************************************
         self.my_layout = QtWidgets.QVBoxLayout(self)
@@ -133,15 +135,19 @@ class StructureSmooth(QWidget):
         self.browse_box1 = QtWidgets.QLineEdit()
         self.browse_box1.setReadOnly(True)
 
-        # self.location_label = QtWidgets.QLabel('Location')
-        # self.location_comboBox = QtWidgets.QComboBox()
-        # self.location_comboBox.addItem('Basement')
-        # self.location_comboBox.addItem('Attic')
-        # self.location_comboBox.addItem('Attic + Basement ')
-        #
-        # self.location_layout = QtWidgets.QVBoxLayout()
-        # self.location_layout.addWidget(self.location_label)
-        # self.location_layout.addWidget(self.location_comboBox)
+        self.location_label = QtWidgets.QLabel('    Location')
+        self.location_label.setFont(self.bold_font)
+        self.secret_label = QtWidgets.QLabel('')
+        self.location_comboBox = QtWidgets.QComboBox()
+
+        self.location_comboBox.addItem('Basement')
+        self.location_comboBox.addItem('Attic')
+        self.location_comboBox.addItem('Attic + Basement ')
+        self.location_comboBox.setCurrentIndex(-1)
+
+        self.location_layout = QtWidgets.QHBoxLayout()
+        self.location_layout.addWidget(self.location_label, 1)
+        self.location_layout.addWidget(self.location_comboBox, 9)
 
         self.progressBar1 = QtWidgets.QProgressBar()
         self.progressBar1.setValue(0)
@@ -155,8 +161,8 @@ class StructureSmooth(QWidget):
 
         self.tab_layout1 = QtWidgets.QVBoxLayout()
         self.tab_layout1.addLayout(self.browse_layout1)
+        self.tab_layout1.addLayout(self.location_layout)
         self.tab_layout1.addWidget(self.plotDisplay_tab, 6)
-        # self.tab_layout1.addLayout(self.location_layout)
         self.tab_layout1.addWidget(self.progressLabel1)
         self.tab_layout1.addWidget(self.progressBar1)
         self.tab_layout1.addWidget(self.plotStructure_button)
@@ -166,7 +172,6 @@ class StructureSmooth(QWidget):
         self.browse_button2 = QtWidgets.QPushButton('Browse')
         self.browse_box2 = QtWidgets.QLineEdit()
         self.browse_box2.setReadOnly(True)
-
 
         self.table_display = self.initTable()
 
@@ -276,6 +281,7 @@ class StructureSmooth(QWidget):
         self.browse_button2.clicked.connect(self.browseFiles2)
         self.plotStructure_button.clicked.connect(self.start1)
         self.analyzeLogs_button.clicked.connect(self.start2)
+        self.location_comboBox.currentIndexChanged.connect(self.comboBoxSelected)
 
     def browseFiles1(self):
 
@@ -289,11 +295,14 @@ class StructureSmooth(QWidget):
 
             self.browse_box1.clear()
             self.browse_box1.insert(self.file_path)
-            self.plotStructure_button.setEnabled(True)
+
 
             temp_folder = os.path.split(self.file_path)
             self.postHeight_path = temp_folder[0]
 
+            if self.location_comboBox.currentIndex() != -1:
+
+                self.plotStructure_button.setEnabled(True)
         pass
 
     def browseFiles2(self):
@@ -310,6 +319,12 @@ class StructureSmooth(QWidget):
 
             self.analyzeLogs_button.setEnabled(True)
             self.set_FileViewer()
+
+    def comboBoxSelected(self):
+
+        if self.browse_box1.text() != '':
+
+            self.plotStructure_button.setEnabled(True)
 
 
     def analyzeLogs(self, clear_table_callback ,display_table_callback, error_message_callback, abort_callback, progress_callback, begin_callback ,finish_callback):
@@ -390,9 +405,6 @@ class StructureSmooth(QWidget):
             self.progressLabel2.setText('Complete.')
 
 
-
-
-
     def plotStructure(self, clear_tabs_callback, plot_callback, error_message_callback, abort_callback, progress_callback, begin_callback, finish_callback):
 
         begin_callback.emit()
@@ -424,9 +436,24 @@ class StructureSmooth(QWidget):
 
             return 0
 
-        structureData = combineTilts(structureData_raw, progress_callback)
+        lengthh = len(structureData_raw)
 
-        xtilt_real, ytilt_real = formatData(structureData, progress_callback)
+        if len(structureData_raw) == 0:
+
+            title = 'File Error'
+            message = 'Input File ' + '\'' + self.file_name + '\'' + ' does not contain any data'
+            error_message_callback.emit(title, message)
+            abort_callback.emit()
+            return 0
+
+        location = self.location_comboBox.currentText()
+
+
+
+
+        structureData = combineTilts(structureData_raw, location, progress_callback)
+
+        xtilt_real, ytilt_real = formatData(structureData, structureData_raw, progress_callback)
 
         Zheight_recreated, Zheight_lowpass, Zheight_delta = recreateStructure(xtilt_real, ytilt_real, progress_callback)
 
@@ -490,6 +517,7 @@ class StructureSmooth(QWidget):
         self.browse_button2.setDisabled(True)
         self.plotStructure_button.setDisabled(True)
         self.browse_button1.setDisabled(True)
+        self.location_comboBox.setDisabled(True)
 
     def finish(self):
 
@@ -497,6 +525,7 @@ class StructureSmooth(QWidget):
         self.browse_button2.setEnabled(True)
         self.plotStructure_button.setEnabled(True)
         self.browse_button1.setEnabled(True)
+        self.location_comboBox.setEnabled(True)
 
         if self.browse_box2.text() != '':
             self.analyzeLogs_button.setEnabled(True)
@@ -516,10 +545,10 @@ class StructureSmooth(QWidget):
 
     def abortNow1(self):
 
-
         self.browse_button2.setEnabled(True)
         self.plotStructure_button.setEnabled(True)
         self.browse_button1.setEnabled(True)
+        self.location_comboBox.setEnabled(True)
 
         if self.browse_box2.text() != '':
             self.analyzeLogs_button.setEnabled(True)
@@ -529,6 +558,7 @@ class StructureSmooth(QWidget):
         self.analyzeLogs_button.setEnabled(True)
         self.browse_button2.setEnabled(True)
         self.browse_button1.setEnabled(True)
+        self.location_comboBox.setEnabled(True)
 
         if self.browse_box1.text() != '':
             self.plotStructure_button.setEnabled(True)

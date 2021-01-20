@@ -1,12 +1,12 @@
 import numpy as np
 
-def formatData(data, progress_callback):
+def formatData(data, data_raw, progress_callback):
 
-    column_x = data['X']
+    column_x = data_raw['X']
     max_x = column_x.max()
     max_x = int(max_x) + 1
 
-    column_y = data['Y']
+    column_y = data_raw['Y']
     max_y = column_y.max()
     max_y = int(max_y) + 1
 

@@ -3,9 +3,9 @@ import re
 import csv
 import pandas as pd
 import os
+
 def parseLogs(log_path, structureVerification_path, log_ct, log_total, progress_callback):
 
-    print('\\\\')
     file_name = log_path.strip().split('\\')[-1]
     progress_text = "Processing File " + str(log_ct + 1) + ' / ' + str(log_total) + ': ' + file_name
     progress_callback.emit(0, progress_text)
@@ -13,7 +13,7 @@ def parseLogs(log_path, structureVerification_path, log_ct, log_total, progress_
     log_file_ct = open(log_path, "r", encoding='utf8', errors='ignore')
     log_file = open(log_path, "r", encoding='utf8', errors='ignore')
 
-    data = {'DM': [], 'X': [], 'Y': [], 'Z': [], 'Pitch': [], 'Roll': []}
+    data = {'DM': [], 'X': [], 'Y': [], 'Z': [], 'Pitch': [], 'Roll': [], 'BotID': []}
 
     row_count = sum(1 for row in log_file_ct)
     count = 0
@@ -52,11 +52,36 @@ def parseLogs(log_path, structureVerification_path, log_ct, log_total, progress_
                 dm_val = re.search("(?<=DM:)[' ']?[-]?[0-9].[0-9]{1,3}", line).group()
                 dm_val = dm_val.lstrip(' ')
 
-                print(line)
+                botID = ''
+
+                try:
+
+                    botID = re.search("(?<=I:)\s?[A-Z][a-z]{1,10}:", line).group()
+                    botID = botID.lstrip(' ')
+                    botID = botID.rstrip(':')
+
+                except Exception as e:
+
+                    # print('BotID exception: ' + str(e))
+                    pass
+
+                try:
+
+                    botID = re.search("[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}", line).group()
+
+
+                except Exception as e:
+
+                    # print('BotID exception: ' + str(e))
+                    pass
+
+
 
                 data['Pitch'].append(float(pitch_val))
                 data['Roll'].append(float(roll_val))
                 data['DM'].append(dm_val)
+                data['BotID'].append(botID)
+
 
                 structureVerification_file = csv.reader(open(structureVerification_path, 'r'), delimiter=",")
 
@@ -67,17 +92,36 @@ def parseLogs(log_path, structureVerification_path, log_ct, log_total, progress_
                         data['Y'].append(int(row[2]))
                         data['Z'].append(int(row[3]))
 
+                        # print(len(data['X']))
+                        # print(len(data['Y']))
+                        # print(len(data['Z']))
+                        # print(len(data['Pitch']))
+                        # print(len(data['Roll']))
+                        # print(len(data['DM']))
+                        # print(len(data['BotID']))
+
                 if len(data['X']) != len(data['DM']):
                     data['X'].append(float('NaN'))
                     data['Y'].append(float('NaN'))
                     data['Z'].append(float('NaN'))
 
+                    # print(len(data['X']))
+                    # print(len(data['Y']))
+                    # print(len(data['Z']))
+                    # print(len(data['Pitch']))
+                    # print(len(data['Roll']))
+                    # print(len(data['DM']))
+                    # print(len(data['BotID']))
+
+
+
 
         except Exception as e:
 
-            print("[ERROR]: exception={}".format(e))
-            print("[ERROR]:  at line =" + line)
+            pass
+            # print("[ERROR]: exception={}".format(e))
+            # print("[ERROR]:  at line =" + line)
 
-    print(count)
+    # print(count)
     my_data = pd.DataFrame(data)
     return my_data

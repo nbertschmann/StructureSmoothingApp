@@ -1,5 +1,6 @@
 import pandas as pd
 def combineTilts2(data):
+
     data_out = pd.DataFrame()
 
     for x in data['X'].unique():
@@ -20,6 +21,8 @@ def combineTilts2(data):
                 roll_sum = roll.sum()
                 roll_average = roll_sum / len(roll)
                 roll_average = round(roll_average, 6)
+
+
 
                 temp_results = {'DM': datamatrix, 'X': [x], 'Y': [y], 'Z': [z], 'Pitch': [pitch_average],
                                 'Roll': [roll_average]}

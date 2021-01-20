@@ -100,7 +100,10 @@ def recreateStructure(Xtilt_real, Ytilt_real, progress_callback):
     Zheight_recreated = Zheight_recreated - np.mean(Zheight_recreated)
 
     Zheight_lowpass = Zheight_recreated
-    lowpass_samples = 2
+
+    structure_size = size_x * size_y
+    lowpass_samples = (round(structure_size / 60))
+    lowpass_samples = int(lowpass_samples)
 
     for i in range(lowpass_samples):
         Zheight_lowpass = blur(Zheight_lowpass, 1)

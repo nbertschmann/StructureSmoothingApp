@@ -7,6 +7,7 @@ from RecreateStructure import recreateStructure
 from PlotArray import plotArray
 from ModifyPostHeights import modifyPostHeights
 from ShowQT import showQT
+from NormalizeTilts import normalizeTilts
 
 import PyQt5
 import sys
@@ -132,12 +133,21 @@ class StructureSmooth(QWidget):
         self.browse_box1 = QtWidgets.QLineEdit()
         self.browse_box1.setReadOnly(True)
 
+        # self.location_label = QtWidgets.QLabel('Location')
+        # self.location_comboBox = QtWidgets.QComboBox()
+        # self.location_comboBox.addItem('Basement')
+        # self.location_comboBox.addItem('Attic')
+        # self.location_comboBox.addItem('Attic + Basement ')
+        #
+        # self.location_layout = QtWidgets.QVBoxLayout()
+        # self.location_layout.addWidget(self.location_label)
+        # self.location_layout.addWidget(self.location_comboBox)
+
         self.progressBar1 = QtWidgets.QProgressBar()
         self.progressBar1.setValue(0)
         self.progressLabel1 = QtWidgets.QLabel()
 
         self.plotDisplay_tab = QtWidgets.QTabWidget()
-
 
         self.browse_layout1 = QtWidgets.QHBoxLayout()
         self.browse_layout1.addWidget(self.browse_button1)
@@ -146,6 +156,7 @@ class StructureSmooth(QWidget):
         self.tab_layout1 = QtWidgets.QVBoxLayout()
         self.tab_layout1.addLayout(self.browse_layout1)
         self.tab_layout1.addWidget(self.plotDisplay_tab, 6)
+        # self.tab_layout1.addLayout(self.location_layout)
         self.tab_layout1.addWidget(self.progressLabel1)
         self.tab_layout1.addWidget(self.progressBar1)
         self.tab_layout1.addWidget(self.plotStructure_button)
@@ -223,6 +234,7 @@ class StructureSmooth(QWidget):
         header.setSectionResizeMode(3, QtWidgets.QHeaderView.Stretch)
         header.setSectionResizeMode(4, QtWidgets.QHeaderView.Stretch)
         header.setSectionResizeMode(5, QtWidgets.QHeaderView.Stretch)
+        header.setSectionResizeMode(6, QtWidgets.QHeaderView.Stretch)
 
         return self.table
 
@@ -343,6 +355,8 @@ class StructureSmooth(QWidget):
             df_array.append(log_data)
 
         log_data_raw = pd.concat(df_array)
+
+        # log_data_normalized = normalizeTilts(log_data_raw)
         log_data_combined = combineTilts2(log_data_raw)
 
         display_table_callback.emit(log_data_combined)
@@ -526,7 +540,7 @@ class StructureSmooth(QWidget):
 
     def clearTable(self):
 
-        column_names = ['DM', 'X', 'Y', 'Z', 'Pitch', 'Roll']
+        column_names = ['DM', 'X', 'Y', 'Z', 'Pitch', 'Roll', 'Bot']
         df = pd.DataFrame(columns=column_names)
         self.showTable(df)
 

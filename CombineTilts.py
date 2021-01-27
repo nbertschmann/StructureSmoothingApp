@@ -1,5 +1,7 @@
 import pandas as pd
 import math
+import numpy as np
+
 def combineTilts(data, location, progress_callback):
     data_out = pd.DataFrame()
 
@@ -16,6 +18,7 @@ def combineTilts(data, location, progress_callback):
 
 
     z_vals = data['Z'].unique()
+    z_vals = z_vals[np.logical_not(np.isnan(z_vals))]
 
     if location == 'Basement':
 

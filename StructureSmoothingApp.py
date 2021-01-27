@@ -436,7 +436,7 @@ class StructureSmooth(QWidget):
 
             return 0
 
-        lengthh = len(structureData_raw)
+        length = len(structureData_raw)
 
         if len(structureData_raw) == 0:
 

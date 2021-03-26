@@ -10,27 +10,16 @@ from ShowQT import showQT
 from NormalizeTilts import normalizeTilts
 
 import PyQt5
-import sys
-from PyQt5 import QtGui
-from PyQt5.QtWidgets import (QWidget, QPushButton, QApplication)
 from PyQt5 import QtWidgets
-import os
-from PyQt5.QtCore import QThreadPool
-from PyQt5.QtCore import QAbstractItemModel
-
 import sys
+import os
+from PyQt5.QtWidgets import QWidget, QPushButton, QApplication
+from PyQt5.QtCore import QThreadPool, Qt, QObject, pyqtSlot, pyqtSignal, QRunnable, QAbstractItemModel
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtCore import Qt, QObject
 import pandas as pd
-
-from PyQt5.QtCore import pyqtSlot, pyqtSignal
-from PyQt5.QtCore import QRunnable
 import time
-import traceback, sys
-
+import traceback
 import plotly.graph_objects as go
-
-
 
 class WorkerSignals(QObject):
 
@@ -51,9 +40,6 @@ class WorkerSignals(QObject):
     showProgress2 = pyqtSignal(int, str)
     begin2 = pyqtSignal()
     finish2 = pyqtSignal()
-
-
-
 
 class Worker1(QRunnable):
 
@@ -268,7 +254,6 @@ class StructureSmooth(QWidget):
 
         self.tree.setRootIndex(self.model.index(self.folder_path))
 
-
     def initUI(self):
 
         self.setGeometry(50, 75, 1000, 900)
@@ -326,7 +311,6 @@ class StructureSmooth(QWidget):
 
             self.plotStructure_button.setEnabled(True)
 
-
     def analyzeLogs(self, clear_table_callback ,display_table_callback, error_message_callback, abort_callback, progress_callback, begin_callback ,finish_callback):
 
         begin_callback.emit()
@@ -371,15 +355,14 @@ class StructureSmooth(QWidget):
 
         log_data_raw = pd.concat(df_array)
 
-        # log_data_normalized = normalizeTilts(log_data_raw)
-        log_data_combined = combineTilts2(log_data_raw)
+        log_data_normalized = normalizeTilts(log_data_raw)
+        log_data_combined = combineTilts2(log_data_normalized)
 
         display_table_callback.emit(log_data_combined)
 
         finish_callback.emit()
         writeToCSV(log_data_raw, output_path, logDataRaw_name)
         writeToCSV(log_data_combined, output_path, logDataCombined_name)
-
 
     def showTable(self, data):
 
@@ -403,7 +386,6 @@ class StructureSmooth(QWidget):
 
         if len(data) != 0:
             self.progressLabel2.setText('Complete.')
-
 
     def plotStructure(self, clear_tabs_callback, plot_callback, error_message_callback, abort_callback, progress_callback, begin_callback, finish_callback):
 
@@ -479,7 +461,6 @@ class StructureSmooth(QWidget):
         self.plotStructure_button.setEnabled(True)
 
         self.progressLabel1.setText('Complete.')
-
 
 
     def start1(self):

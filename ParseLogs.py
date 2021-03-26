@@ -92,28 +92,10 @@ def parseLogs(log_path, structureVerification_path, log_ct, log_total, progress_
                         data['Y'].append(int(row[2]))
                         data['Z'].append(int(row[3]))
 
-                        # print(len(data['X']))
-                        # print(len(data['Y']))
-                        # print(len(data['Z']))
-                        # print(len(data['Pitch']))
-                        # print(len(data['Roll']))
-                        # print(len(data['DM']))
-                        # print(len(data['BotID']))
-
                 if len(data['X']) != len(data['DM']):
                     data['X'].append(float('NaN'))
                     data['Y'].append(float('NaN'))
                     data['Z'].append(float('NaN'))
-
-                    # print(len(data['X']))
-                    # print(len(data['Y']))
-                    # print(len(data['Z']))
-                    # print(len(data['Pitch']))
-                    # print(len(data['Roll']))
-                    # print(len(data['DM']))
-                    # print(len(data['BotID']))
-
-
 
 
         except Exception as e:

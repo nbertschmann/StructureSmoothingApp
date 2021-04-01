@@ -430,9 +430,6 @@ class StructureSmooth(QWidget):
 
         location = self.location_comboBox.currentText()
 
-
-
-
         structureData = combineTilts(structureData_raw, location, progress_callback)
 
         xtilt_real, ytilt_real = formatData(structureData, structureData_raw, progress_callback)

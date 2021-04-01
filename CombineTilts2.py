@@ -7,7 +7,6 @@ def combineTilts2(data):
 
         for y in data.loc[(data['X'] == x), 'Y'].unique():
 
-
             for z in data.loc[(data['X'] == x) & (data['Y'] == y), 'Z'].unique():
 
                 datamatrix = data.loc[(data['X'] == x) & (data['Y'] == y) & (data['Z'] == z), 'DM'].max()
@@ -22,14 +21,11 @@ def combineTilts2(data):
                 roll_average = roll_sum / len(roll)
                 roll_average = round(roll_average, 6)
 
-
-
                 temp_results = {'DM': datamatrix, 'X': [x], 'Y': [y], 'Z': [z], 'Pitch': [pitch_average],
                                 'Roll': [roll_average]}
                 temp_df = pd.DataFrame(temp_results)
 
                 data_out = data_out.append(temp_df)
-
 
     data_sorted = data_out.sort_values(by=['Z', 'X', 'Y'], ascending=True, ignore_index=True)
 

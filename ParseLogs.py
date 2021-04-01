@@ -62,26 +62,20 @@ def parseLogs(log_path, structureVerification_path, log_ct, log_total, progress_
 
                 except Exception as e:
 
-                    # print('BotID exception: ' + str(e))
                     pass
 
                 try:
 
                     botID = re.search("[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}", line).group()
 
-
                 except Exception as e:
 
-                    # print('BotID exception: ' + str(e))
                     pass
-
-
 
                 data['Pitch'].append(float(pitch_val))
                 data['Roll'].append(float(roll_val))
                 data['DM'].append(dm_val)
                 data['BotID'].append(botID)
-
 
                 structureVerification_file = csv.reader(open(structureVerification_path, 'r'), delimiter=",")
 
@@ -97,13 +91,11 @@ def parseLogs(log_path, structureVerification_path, log_ct, log_total, progress_
                     data['Y'].append(float('NaN'))
                     data['Z'].append(float('NaN'))
 
-
         except Exception as e:
 
             pass
             # print("[ERROR]: exception={}".format(e))
             # print("[ERROR]:  at line =" + line)
 
-    # print(count)
     my_data = pd.DataFrame(data)
     return my_data

@@ -109,7 +109,7 @@ class StructureSmooth(QWidget):
         self.recreateStruct_str = ''
         self.modifyPost_str = ''
 
-        self.setWindowIcon(QtGui.QIcon('structure3.ico'))
+        self.setWindowIcon(QtGui.QIcon('StructureSmoothingIcon.ico'))
         self.bold_font = QtGui.QFont()
         self.bold_font.setBold(True)
 
@@ -257,7 +257,7 @@ class StructureSmooth(QWidget):
     def initUI(self):
 
         self.setGeometry(50, 75, 1000, 900)
-        self.setWindowTitle(' Structure Smoothing Application')
+        self.setWindowTitle(' Structure Smoothing Application V1.0')
 
         self.show()
 

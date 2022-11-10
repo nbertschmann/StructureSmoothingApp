@@ -19,8 +19,6 @@ def formatData(data, data_raw, progress_callback):
 
     for y in range(max_y):
         for x in range(max_x):
-            # x_tilt = data.loc[(data['X'] == x) & (data['Y'] == y) & (data['Z'] == 0), 'Pitch']
-            # y_tilt = data.loc[(data['X'] == x) & (data['Y'] == y) & (data['Z'] == 0), 'Roll']
 
             x_tilt = data.loc[(data['X'] == x) & (data['Y'] == y), 'Pitch']
             y_tilt = data.loc[(data['X'] == x) & (data['Y'] == y), 'Roll']

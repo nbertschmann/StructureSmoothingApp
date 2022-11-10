@@ -110,6 +110,4 @@ def recreateStructure(Xtilt_real, Ytilt_real, progress_callback):
 
     Zheight_delta = np.subtract(Zheight_lowpass, Zheight_recreated)
 
-
-
     return Zheight_recreated, Zheight_lowpass, Zheight_delta

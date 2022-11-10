@@ -59,14 +59,11 @@ class Worker1(QRunnable):
         self.kwargs['begin_callback'] = self.signals.begin1
         self.kwargs['finish_callback'] = self.signals.finish1
 
-
     @pyqtSlot()
     def run(self):
 
         result = self.fn(*self.args, **self.kwargs)
         print(str(result))
-
-
 
 class Worker2(QRunnable):
 
@@ -598,7 +595,6 @@ class TableModel(QtCore.QAbstractTableModel):
 
             if orientation == Qt.Vertical:
                 return str(self._data.index[section])
-
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)

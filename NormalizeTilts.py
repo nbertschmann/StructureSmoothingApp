@@ -31,4 +31,3 @@ def normalizeTilts(data):
 
     return data_new
 
-    pass

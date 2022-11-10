@@ -8,7 +8,6 @@ def blur(np_array, val):
     size_x = len(np_array[0])
     size_y = len(np_array)
 
-
     blur_array = np.zeros((size_y, size_x), float)
     blur_array[:] = np.NaN
 

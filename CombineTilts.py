@@ -16,7 +16,6 @@ def combineTilts(data, location, progress_callback):
 
             data_size += 1
 
-
     z_vals = data['Z'].unique()
     z_vals = z_vals[np.logical_not(np.isnan(z_vals))]
 
@@ -36,7 +35,6 @@ def combineTilts(data, location, progress_callback):
             location_list.append(max(z_vals))
         else:
             location_list.append(min(z_vals))
-
 
     for x in data['X'].unique():
 
@@ -79,6 +77,5 @@ def combineTilts(data, location, progress_callback):
         data_sorted = data_out.sort_values(by=['Z', 'X', 'Y'], ascending=True, ignore_index=True)
     else:
         data_sorted = pd.DataFrame(columns=['DM', 'X', 'Y', 'Z', 'Pitch', 'Roll'])
-
 
     return data_sorted

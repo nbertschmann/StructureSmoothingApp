@@ -94,8 +94,6 @@ def parseLogs(log_path, structureVerification_path, log_ct, log_total, progress_
         except Exception as e:
 
             pass
-            # print("[ERROR]: exception={}".format(e))
-            # print("[ERROR]:  at line =" + line)
 
     my_data = pd.DataFrame(data)
     return my_data

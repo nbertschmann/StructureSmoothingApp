@@ -37,6 +37,4 @@ def plotArray(input_array, z_low, z_high):
             yaxis=dict(tickmode='array', tickvals=ytick_array),
             zaxis=dict(nticks=4, range=[z_low, z_high])))
 
-    # fig.show()
-
     return fig

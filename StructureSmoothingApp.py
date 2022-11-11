@@ -108,7 +108,7 @@ class StructureSmooth(QWidget):
         self.recreateStruct_str = ''
         self.modifyPost_str = ''
 
-        self.setWindowIcon(QtGui.QIcon('StructureSmoothingIcon.ico'))
+        #self.setWindowIcon(QtGui.QIcon('StructureSmoothingIcon.ico'))
         self.bold_font = QtGui.QFont()
         self.bold_font.setBold(True)
 

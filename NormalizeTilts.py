@@ -2,7 +2,12 @@ import pandas as pd
 
 
 def normalizeTilts(data):
-
+    """
+    This function normalizes the pitch and roll values (tilt values) based on BotID to eliminate variations in IMU
+    measurements from robot to robot
+    :param data: contains BotID, DM value, X location, Y location, Pitch Value, Roll Value
+    :return data_new: same as input data but with normalized pitch and roll values
+    """
     data_new = pd.DataFrame()
 
     for bot in data['BotID'].unique():
@@ -20,9 +25,6 @@ def normalizeTilts(data):
         roll_ct = len(roll_vals)
         roll_ave = roll_sum/roll_ct
         roll_ave = round(roll_ave, 4)
-
-        # df['Pitch'].apply(lambda x: x + pitch_ave)
-        # df['Roll'].apply(lambda y: y + roll_ave)
 
         df['Roll'] -= roll_ave
         df['Pitch'] -= pitch_ave

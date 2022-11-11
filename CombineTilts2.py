@@ -1,5 +1,11 @@
 import pandas as pd
+
 def combineTilts2(data):
+    """
+    This function averages pitch and roll values from a given square
+    :param data: contains DM value, X location, Y location, Pitch Value, Roll Value
+    :return data_sorted: contains averaged values from each square
+    """
 
     data_out = pd.DataFrame()
 

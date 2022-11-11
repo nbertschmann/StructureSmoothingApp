@@ -3,6 +3,13 @@ import math
 import numpy as np
 
 def combineTilts(data, location, progress_callback):
+    """
+    This function averages pitch and roll values from a given square, based on if it was in the basement or attic
+    :param data: contains DM value, X location, Y location, Pitch Value, Roll Value
+    :param location: contains whether the data is from basement or attic
+    :param progress_callback: returns progress of the averaging calculations
+    :return data_sorted: contains averaged values from each square
+    """
     data_out = pd.DataFrame()
 
     count = 0

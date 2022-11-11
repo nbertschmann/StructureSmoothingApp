@@ -42,6 +42,7 @@ class WorkerSignals(QObject):
     finish2 = pyqtSignal()
 
 class Worker1(QRunnable):
+    # runs thread for plotting structure values
 
     def __init__(self, fn, *args, **kwargs):
         super(Worker1, self).__init__()
@@ -66,7 +67,7 @@ class Worker1(QRunnable):
         print(str(result))
 
 class Worker2(QRunnable):
-
+    # runs thread for analyzing logs
     def __init__(self, fn, *args, **kwargs):
         super(Worker2, self).__init__()
         # Store constructor arguments (re-used for processing)
@@ -90,6 +91,7 @@ class Worker2(QRunnable):
         print(str(result))
 
 class StructureSmooth(QWidget):
+    # generates UI layout
     def __init__(self):
         super().__init__()
 

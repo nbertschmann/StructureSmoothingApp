@@ -1,7 +1,12 @@
 import numpy as np
 
 def blur(np_array, val):
-
+    """
+    This function applies a low-pass smoothing filter to the recreated structure values
+    :param np_array: contains the recreated structure value
+    :param val:
+    :return blur_array:
+    """
     b_x = val
     b_y = val
 

@@ -3,6 +3,16 @@ from math import atan, pi
 from BlurArray import blur
 
 def recreateStructure(Xtilt_real, Ytilt_real, progress_callback):
+    """
+    This function uses the pitch (Xtilt_real) and roll (Ytilt_real) values for each square to recreate the relative
+    heights of each post on the structure
+    :param Xtilt_real: contains the pitch value of each square
+    :param Ytilt_real: contains the roll value of each square
+    :param progress_callback: returns the progress of the structure recreation process
+    :return Zheight_recreated: returns the recreated structure values
+    :return Zheight_lowpass: returns the "smoothed" structure values
+    :return Zheight_delta: returns the difference between the recreated structure and the smoothed structure
+    """
 
     size_x = len(Xtilt_real[0]) + 1
     size_y = len(Xtilt_real) + 1

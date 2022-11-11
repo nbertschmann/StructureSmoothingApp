@@ -5,7 +5,15 @@ import pandas as pd
 import os
 
 def parseLogs(log_path, structureVerification_path, log_ct, log_total, progress_callback):
-
+    """
+    This function parses the log data to extract DM, X location, Y location, Z location, Pitch, Roll, and Bot ID values
+    :param log_path: contains the file path of where the robot log file is located
+    :param structureVerification_path: contains the file path of where the robot log file is located
+    :param log_ct: contains the number of logs that have to be parsed through
+    :param log_total: contains which log is being currently processes
+    :param progress_callback: returns the progress of the log parsing
+    :return my_data: returns DM value, X location, Y location, Pitch Value, Roll Value
+    """
     file_name = log_path.strip().split('\\')[-1]
     progress_text = "Processing File " + str(log_ct + 1) + ' / ' + str(log_total) + ': ' + file_name
     progress_callback.emit(0, progress_text)

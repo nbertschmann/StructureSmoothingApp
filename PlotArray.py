@@ -2,7 +2,12 @@ import numpy as np
 import plotly.graph_objects as go
 
 def plotArray(input_array, z_low, z_high):
-
+    """
+    This function generates a 3D plot of the recreated structure values
+    :param z_low: lowest z_value of recreated structure
+    :param z_high: highest z_value of recreated structure
+    :return fig: generated plotly figure
+    """
     size_x = len(input_array[0])
     size_y = len(input_array)
 
@@ -27,7 +32,6 @@ def plotArray(input_array, z_low, z_high):
 
             x_array[y, x] = x
             y_array[y, x] = y
-
 
     fig = go.Figure(data=[go.Surface(x=x_array, y=y_array, z=input_array)])
 

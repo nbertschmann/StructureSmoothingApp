@@ -1,7 +1,11 @@
 import pandas as pd
 
 def modifyPostHeights(Zheight_delta):
-
+    """
+    This function calculates the rotations required to properly adjust the post heights
+    :param Zheight_delta: contains the height delta that the post should be adjusted
+    :return delta_df: rotations required to properly adjust the post heights
+    """
     delta_data = {'X': [], 'Y': [], 'Z': [], 'Delta': [], 'Rotations': []}
 
     pitch = 2.5

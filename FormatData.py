@@ -1,7 +1,13 @@
 import numpy as np
 
 def formatData(data, data_raw, progress_callback):
-
+    """
+    This function formats the pitch (x_tilt) and roll (y_tilt) data into arrays
+    :param data_raw: contains DM value, X location, Y location, Pitch Value, Roll Value
+    :param progress_callback: returns progress of pitch and roll formatting
+    :return x_tilt_real: contains pitch values in the form of an array
+    :return y_tilt_real: contains roll values in the form of an array
+    """
     column_x = data_raw['X']
     max_x = column_x.max()
     max_x = int(max_x) + 1

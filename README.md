@@ -1,5 +1,4 @@
 # StructureSmootingApp
-# this is a README file
 
 I. Name
 --------

@@ -1,4 +1,4 @@
-this is a README file
+# Structure Smoothing User Interface
 
 I. Name
 --------

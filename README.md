@@ -19,22 +19,22 @@ manually modified based the delta value to smooth out the structure and ensure m
 
 IV. File list
 -------------
-StructureSmoothingApp.py      Base UI file
-CombineTilts.py               Averages pitch and roll values from a given square, based on if using basement or 
-                              attic data
-CombineTilts2.py              Averages pitch and roll values from a given square
-ParseLogs.py                  Parses the log data to extract DM, X location, Y location, Z location, Pitch, Roll, 
-                              and Bot ID values
-FormatData.py                 Formats the pitch (x_tilt) and roll (y_tilt) data into arrays
-NormalizeTilts.py             Normalizes the pitch and roll values (tilt values) based on BotID to eliminate 
-                              variations in IMU measurements from robot to robot
-RecreateStructure.py          Uses the pitch (Xtilt_real) and roll (Ytilt_real) values for each square to recreate 
-                              the relative heights of each post on the structure                              
-PlotArray.py                  Generates a 3D plot of the recreated structure values
-ShowQT.py                     Takes in the generated plotly figure and generates an html value for it to be 
-                              properly displayed
-WriteToCSV                    Writes data values to a csv file
-README.txt 	                  This file
+* StructureSmoothingApp.py:      Base UI file
+* CombineTilts.py:               Averages pitch and roll values from a given square, based on if using basement or 
+                                 attic data
+* CombineTilts2.py:              Averages pitch and roll values from a given square
+* ParseLogs.py:                  Parses the log data to extract DM, X location, Y location, Z location, Pitch, Roll, 
+                                 and Bot ID values
+* FormatData.py:                 Formats the pitch (x_tilt) and roll (y_tilt) data into arrays
+* NormalizeTilts.py:             Normalizes the pitch and roll values (tilt values) based on BotID to eliminate 
+                                 variations in IMU measurements from robot to robot
+* RecreateStructure.py:          Uses the pitch (Xtilt_real) and roll (Ytilt_real) values for each square to recreate 
+                                 the relative heights of each post on the structure                              
+* PlotArray.py:                  Generates a 3D plot of the recreated structure values
+* ShowQT.py:                     Takes in the generated plotly figure and generates an html value for it to be 
+                                 properly displayed
+* WriteToCSV:                    Writes data values to a csv file
+* README.txt: 	                 This file
 
 V. Documentation
 ------------------
